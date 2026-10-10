@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "target": "portal-diferentaco",
     "public": "dist",
     "ignore": [
       "firebase.json",

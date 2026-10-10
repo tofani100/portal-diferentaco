@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "playcomunique-site"
+  },
+  "targets": {
+    "playcomunique-site": {
+      "hosting": {
+        "portal-diferentaco": [
+          "portal-diferentaco"
+        ]
+      }
+    }
+  }
+}

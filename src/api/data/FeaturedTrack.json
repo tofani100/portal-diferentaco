@@ -1,0 +1,50 @@
+[
+  {
+    "title": "QUER TERMINAR, TERMINA",
+    "media_url": "https://www.youtube.com/watch?v=r3xpWpI3ycc&list=RDr3xpWpI3ycc&start_radio=1",
+    "media_type": "youtube",
+    "order": 4,
+    "id": "69076cfd27bfe97b197842a3",
+    "created_date": "2025-11-02T14:38:53.781000",
+    "updated_date": "2025-11-02T14:38:53.781000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "title": "TONELADAS DE PAIXÃO / ME APAIXONEI / VOCÊ SÓ ME FAZ FELIZ",
+    "media_url": "https://www.youtube.com/watch?v=lzqvKMFGbdg&list=RDlzqvKMFGbdg&start_radio=1",
+    "media_type": "youtube",
+    "order": 3,
+    "id": "69076ca6129fd9ad6a6e4ce2",
+    "created_date": "2025-11-02T14:37:26.331000",
+    "updated_date": "2025-11-02T14:37:26.331000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "title": "SEM ROUPA BEM LOUCA",
+    "media_url": "https://www.youtube.com/watch?v=l9Lg_j2X-68&list=RDl9Lg_j2X-68&start_radio=1",
+    "media_type": "youtube",
+    "order": 2,
+    "id": "69076beff03eab8bf0b698c4",
+    "created_date": "2025-11-02T14:34:23.748000",
+    "updated_date": "2025-11-02T14:34:23.748000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "title": "SOSSEGA NA SUA BOCA",
+    "media_url": "https://www.youtube.com/watch?v=JPNYiqwJmmI&start_radio=1",
+    "media_type": "youtube",
+    "order": 1,
+    "id": "69076b5b92941940c4532334",
+    "created_date": "2025-11-02T14:31:55.408000",
+    "updated_date": "2025-11-02T14:31:55.408000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  }
+]

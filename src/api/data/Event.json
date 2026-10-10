@@ -1,0 +1,44 @@
+[
+  {
+    "date": "2025-10-30T22:00",
+    "city": "Ribeirão Preto",
+    "state": "SP",
+    "venue": "Clube da Viola",
+    "ticket_link": "",
+    "status": "past",
+    "id": "6906e75886b2e00f50110b02",
+    "created_date": "2025-11-02T05:08:40.723000",
+    "updated_date": "2025-11-02T05:08:40.723000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "date": "2025-11-16T22:00",
+    "city": "São Simão ",
+    "state": "SP",
+    "venue": "Centro de Eventos Prefeitura Municipal",
+    "ticket_link": "",
+    "status": "upcoming",
+    "id": "6906e6503378b4021e73586e",
+    "created_date": "2025-11-02T05:04:16.577000",
+    "updated_date": "2025-11-28T14:41:08.364000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "date": "2025-11-28T22:00",
+    "city": "Sertãozinho",
+    "state": "SP",
+    "venue": "Ginasio de Esportes \"Docão\"",
+    "ticket_link": "",
+    "status": "upcoming",
+    "id": "6906d3e84d1c4a78c2067899",
+    "created_date": "2025-11-02T03:45:44.600000",
+    "updated_date": "2025-11-28T14:42:14.861000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "role": "admin",
+    "id": "6906ca5e85d3d7007a37ecf1",
+    "created_date": "2025-11-02T03:05:02.109000Z",
+    "updated_date": "2026-01-30T13:52:04.028000Z",
+    "email": "tofani100@gmail.com",
+    "full_name": "Marcos Tofani",
+    "disabled": null,
+    "disabled_reason": null,
+    "is_verified": true,
+    "force_password_reset": false,
+    "app_id": "6906ca5e85d3d7007a37ecf0",
+    "is_service": false,
+    "collaborator_role": "editor",
+    "_app_role": "admin"
+  },
+  {
+    "created_date": "2025-11-28T14:30:23.521000Z",
+    "updated_date": "2025-11-28T14:41:10.403000Z",
+    "disabled": null,
+    "is_verified": true,
+    "app_id": "6906ca5e85d3d7007a37ecf0",
+    "is_service": false,
+    "_app_role": "admin",
+    "role": "admin",
+    "id": "6929b1ff60ddf908421c3424",
+    "email": "tofani2002@gmail.com",
+    "full_name": "tofani2002",
+    "disabled_reason": null,
+    "force_password_reset": false,
+    "collaborator_role": "editor"
+  },
+  {
+    "created_date": "2025-11-28T14:35:44.275000Z",
+    "updated_date": "2025-11-28T14:37:20.104000Z",
+    "disabled": null,
+    "is_verified": true,
+    "app_id": "6906ca5e85d3d7007a37ecf0",
+    "is_service": false,
+    "_app_role": "admin",
+    "role": "admin",
+    "id": "6929b340d6dec54ede27ba4e",
+    "email": "wtofani@hotmail.com",
+    "full_name": "wtofani",
+    "disabled_reason": null,
+    "force_password_reset": false,
+    "collaborator_role": "editor"
+  }
+]

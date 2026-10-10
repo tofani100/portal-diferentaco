@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Juliana Costa",
+    "email": "juliana@example.com",
+    "whatsapp": null,
+    "city": "Ribeirão Preto",
+    "state": "SP",
+    "notify_shows": true,
+    "notify_news": false,
+    "active": true,
+    "id": "69125fa2caf36578cffa5b59",
+    "created_date": "2025-11-10T21:56:50.603000",
+    "updated_date": "2025-11-10T21:56:50.603000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "name": "Pedro Oliveira",
+    "email": "pedro@example.com",
+    "whatsapp": "(16) 99876-5432",
+    "city": "São Simão",
+    "state": "SP",
+    "notify_shows": true,
+    "notify_news": true,
+    "active": true,
+    "id": "69125fa2caf36578cffa5b58",
+    "created_date": "2025-11-10T21:56:50.603000",
+    "updated_date": "2025-11-10T21:56:50.603000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "name": "Fernando Santos",
+    "email": null,
+    "whatsapp": "(16) 98765-4321",
+    "city": "Franca",
+    "state": "SP",
+    "notify_shows": true,
+    "notify_news": true,
+    "active": true,
+    "id": "69125fa2caf36578cffa5b5a",
+    "created_date": "2025-11-10T21:56:50.603000",
+    "updated_date": "2025-11-10T21:56:50.603000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  }
+]

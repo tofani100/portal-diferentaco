@@ -1,0 +1,37 @@
+[
+  {
+    "question": "Qual música você quer ouvir no próximo show?",
+    "options": [
+      {
+        "id": "opt1",
+        "text": "Sentimento é Mato",
+        "votes": 45
+      },
+      {
+        "id": "opt2",
+        "text": "Segunda Intenção",
+        "votes": 38
+      },
+      {
+        "id": "opt3",
+        "text": "Coração Calejado",
+        "votes": 52
+      },
+      {
+        "id": "opt4",
+        "text": "Bebida e Paixão",
+        "votes": 31
+      }
+    ],
+    "active": true,
+    "featured": true,
+    "end_date": null,
+    "category": "music",
+    "id": "69125fa2caf36578cffa5b57",
+    "created_date": "2025-11-10T21:56:50.599000",
+    "updated_date": "2025-11-10T21:56:50.599000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  }
+]

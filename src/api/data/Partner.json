@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Embalasert",
+    "logo_url": "/assets/media/4b9cfea9f_Logo08-10Embalasert.png",
+    "website_url": "https://embalasert.com.br/",
+    "whatsapp": "",
+    "email": "",
+    "order": 0,
+    "id": "690773446c6034ae6e1be217",
+    "created_date": "2025-11-02T15:05:40.522000",
+    "updated_date": "2025-11-02T15:05:40.522000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "name": "LCS",
+    "logo_url": "/assets/media/15034f95f_LogoLCS.png",
+    "website_url": "https://lcstubosechapas.com.br/",
+    "whatsapp": "",
+    "email": "",
+    "order": 0,
+    "id": "6907726fd47ed21b84fa21d2",
+    "created_date": "2025-11-02T15:02:07.644000",
+    "updated_date": "2025-11-02T15:02:07.644000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "name": "Embalasert",
+    "logo_url": "/assets/media/afc8f0360_NOVALOGOSICCHIERIjpeg.png",
+    "website_url": "https://sicchiericorteedobra.com.br/",
+    "whatsapp": "(16) 3947-4587",
+    "email": "contato@sicchieri.com.br",
+    "order": 1,
+    "id": "6907721062a61284c60339a9",
+    "created_date": "2025-11-02T15:00:32.467000",
+    "updated_date": "2025-11-02T15:00:32.467000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
+    "name": "playcomunique",
+    "logo_url": "/assets/media/7e4bf9be7_LOGO.png",
+    "website_url": "http://playcomunique.com.br",
+    "whatsapp": "16991568475",
+    "email": "contato@playcomunique.com.br",
+    "order": 4,
+    "id": "6906ecee1fdaccdb13cd8e2e",
+    "created_date": "2025-11-02T05:32:30.693000",
+    "updated_date": "2025-11-02T15:00:44.265000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  }
+]

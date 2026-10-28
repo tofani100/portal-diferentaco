@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import MediaSpecsBanner from "@/components/admin/MediaSpecsBanner";
 
 export default function AdminVideos() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -212,6 +213,8 @@ export default function AdminVideos() {
             Adicionar Vídeo
           </Button>
         </div>
+
+        <MediaSpecsBanner type="video" />
 
         {/* Filter Buttons */}
         <div className="flex gap-2 mb-8">

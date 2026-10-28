@@ -12,10 +12,29 @@ import { ptBR } from "date-fns/locale";
 export default function Agenda() {
   const [filter, setFilter] = useState("upcoming");
 
-  const { data: events = [], isLoading } = useQuery({
-    queryKey: ["events", filter],
-    queryFn: () => base44.entities.Event.filter({ status: filter }, filter === "upcoming" ? "date" : "-date"),
+  const { data: allEvents = [], isLoading } = useQuery({
+    queryKey: ["events"],
+    queryFn: () => base44.entities.Event.list(),
   });
+
+  const events = React.useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    return allEvents
+      .filter((event) => {
+        const eventDate = new Date(event.date);
+        const isUpcoming = eventDate >= now && event.status !== "past";
+        return filter === "upcoming" ? isUpcoming : !isUpcoming;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        // Próximos shows: o mais próximo de hoje fica no topo (ordem crescente)
+        // Shows realizados: o mais recente fica no topo (ordem decrescente)
+        return filter === "upcoming" ? dateA - dateB : dateB - dateA;
+      });
+  }, [allEvents, filter]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] py-12 px-4">

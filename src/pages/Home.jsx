@@ -10,9 +10,9 @@ import PollSection from "../components/home/PollSection";
 import CTASection from "../components/home/CTASection";
 
 export default function Home() {
-  const { data: upcomingEvents = [] } = useQuery({
-    queryKey: ["upcomingEvents"],
-    queryFn: () => base44.entities.Event.filter({ status: "upcoming" }, "date", 1),
+  const { data: allEvents = [] } = useQuery({
+    queryKey: ["events"],
+    queryFn: () => base44.entities.Event.list(),
   });
 
   const { data: latestVideos = [] } = useQuery({
@@ -20,7 +20,13 @@ export default function Home() {
     queryFn: () => base44.entities.Video.list("-created_date", 3),
   });
 
-  const nextEvent = upcomingEvents[0];
+  const nextEvent = React.useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return allEvents
+      .filter((e) => new Date(e.date) >= now && e.status !== "past")
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+  }, [allEvents]);
 
   return (
     <div>

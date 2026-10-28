@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Upload, Trash2, Image as ImageIcon, Link as LinkIcon, Home, Eye, EyeOff } from "lucide-react";
+import { Plus, Upload, Trash2, Image as ImageIcon, Link as LinkIcon, Home, Eye, EyeOff, Monitor, Smartphone } from "lucide-react";
+import MediaSpecsBanner from "@/components/admin/MediaSpecsBanner";
 import {
   Dialog,
   DialogContent,
@@ -202,6 +203,61 @@ export default function AdminFotos() {
     }
   };
 
+  const handleHeroMobileFileUpload = async (file, index) => {
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const currentItems = heroConfig?.hero_media_items || [];
+      const newItems = currentItems.map((item, i) => {
+        if (i === index) {
+          return {
+            ...item,
+            mobile_url: file_url
+          };
+        }
+        return item;
+      });
+
+      await updateHeroConfig.mutateAsync({
+        id: heroConfig?.id,
+        data: {
+          hero_media_items: newItems
+        }
+      });
+      await queryClient.refetchQueries({ queryKey: ["siteConfig", "hero_media"] });
+      alert("Versão específica para Celular (9:16) adicionada com sucesso!");
+    } catch (error) {
+      console.error('Erro ao fazer upload mobile:', error);
+      alert('Erro ao fazer upload da versão mobile: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveHeroMobile = async (index) => {
+    if (!confirm("Deseja remover a versão mobile desta mídia? Ela voltará a usar o enquadramento padrão.")) return;
+    try {
+      const currentItems = heroConfig?.hero_media_items || [];
+      const newItems = currentItems.map((item, i) => {
+        if (i === index) {
+          const { mobile_url, ...rest } = item;
+          return rest;
+        }
+        return item;
+      });
+
+      await updateHeroConfig.mutateAsync({
+        id: heroConfig?.id,
+        data: {
+          hero_media_items: newItems
+        }
+      });
+      await queryClient.refetchQueries({ queryKey: ["siteConfig", "hero_media"] });
+    } catch (error) {
+      alert('Erro ao remover versão mobile');
+    }
+  };
+
   const handleToggleHeroVisibility = async (index) => {
     try {
       const currentItems = heroConfig?.hero_media_items || [];
@@ -333,6 +389,8 @@ export default function AdminFotos() {
           </TabsList>
 
           <TabsContent value="hero">
+            <MediaSpecsBanner type="hero" />
+
             <Card className="bg-[#1A1A1A] border-[#8B6F47]/30 p-6 mb-6">
               <h3 className="text-xl font-bold text-white mb-2">Fotos/Vídeos da Capa Inicial</h3>
               <p className="text-[#D4C5B9] text-sm mb-4">
@@ -448,6 +506,53 @@ export default function AdminFotos() {
                           {item.type === 'video' ? 'Vídeo' : 'Imagem'}
                         </div>
                       </div>
+
+                      {/* Desktop / Mobile info & actions */}
+                      <div className="p-3 border-t border-[#8B6F47]/20 flex flex-col gap-2 bg-[#141414]">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white font-medium flex items-center gap-1">
+                            <Monitor className="w-3.5 h-3.5 text-amber-400" />
+                            Desktop (16:9)
+                          </span>
+                          {item.mobile_url ? (
+                            <span className="text-emerald-400 flex items-center gap-1 font-semibold text-[11px] bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800">
+                              <Smartphone className="w-3 h-3" /> Mobile Ativo
+                            </span>
+                          ) : (
+                            <span className="text-[#D4C5B9] text-[11px] flex items-center gap-1" title="Sem versão vertical dedicada: usando recorte central">
+                              <Smartphone className="w-3 h-3 text-[#F4231E]" /> Padrão
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-1 pt-1 border-t border-white/5">
+                          <label className="text-[11px] bg-[#1A1A1A] hover:bg-[#8B6F47]/20 text-amber-200 border border-[#8B6F47]/40 px-2 py-1 rounded cursor-pointer transition-colors inline-flex items-center gap-1">
+                            <Upload className="w-3 h-3" />
+                            <span>{item.mobile_url ? "Alterar Mobile" : "+ Mobile (9:16)"}</span>
+                            <input
+                              type="file"
+                              accept="image/*,video/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) handleHeroMobileFileUpload(file, index);
+                              }}
+                              disabled={uploading}
+                            />
+                          </label>
+
+                          {item.mobile_url && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveHeroMobile(index)}
+                              className="text-red-400 hover:text-red-300 text-[11px] px-1 py-0.5"
+                              title="Remover versão vertical dedicada"
+                            >
+                              Remover
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </Card>
                   );
                 })}
@@ -456,6 +561,8 @@ export default function AdminFotos() {
           </TabsContent>
 
           <TabsContent value="press">
+            <MediaSpecsBanner type="press" />
+
             <div className="flex gap-2 mb-4">
               <Button
                 variant={filterPress === "all" ? "default" : "outline"}
@@ -501,6 +608,8 @@ export default function AdminFotos() {
           </TabsContent>
 
           <TabsContent value="road">
+            <MediaSpecsBanner type="road" />
+
             <div className="flex gap-2 mb-4">
               <Button
                 variant={filterRoad === "all" ? "default" : "outline"}

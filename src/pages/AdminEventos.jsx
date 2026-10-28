@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import MediaSpecsBanner from "@/components/admin/MediaSpecsBanner";
 
 export default function AdminEventos() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -30,10 +31,34 @@ export default function AdminEventos() {
 
   const queryClient = useQueryClient();
 
-  const { data: events = [], isLoading } = useQuery({
+  const { data: rawEvents = [], isLoading } = useQuery({
     queryKey: ["admin-events"],
-    queryFn: () => base44.entities.Event.list("-date"),
+    queryFn: () => base44.entities.Event.list(),
   });
+
+  const events = React.useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const upcoming = [];
+    const past = [];
+
+    rawEvents.forEach((ev) => {
+      const evDate = new Date(ev.date);
+      if (evDate >= now && ev.status !== "past") {
+        upcoming.push(ev);
+      } else {
+        past.push(ev);
+      }
+    });
+
+    // Próximos shows: data mais próxima no topo
+    upcoming.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Shows já realizados: show mais recente no topo
+    past.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return [...upcoming, ...past];
+  }, [rawEvents]);
 
   const createEvent = useMutation({
     mutationFn: (data) => base44.entities.Event.create(data),
@@ -122,6 +147,8 @@ export default function AdminEventos() {
           </Button>
         </div>
 
+        <MediaSpecsBanner type="event" />
+
         {isLoading ? (
           <div className="text-center text-[#D4C5B9] py-12">
             <Calendar className="w-12 h-12 animate-pulse mx-auto mb-4" />
@@ -139,13 +166,20 @@ export default function AdminEventos() {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        event.status === 'upcoming' 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {event.status === 'upcoming' ? 'Próximo' : 'Realizado'}
-                      </div>
+                      {(() => {
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+                        const isUpcoming = new Date(event.date) >= now && event.status !== 'past';
+                        return (
+                          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            isUpcoming 
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                              : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                          }`}>
+                            {isUpcoming ? 'Próximo Show' : 'Show Realizado'}
+                          </div>
+                        );
+                      })()}
                       <span className="text-[#E9A55C] font-semibold">
                         {format(new Date(event.date), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
                       </span>

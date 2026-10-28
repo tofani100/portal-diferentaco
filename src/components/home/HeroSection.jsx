@@ -129,18 +129,24 @@ export default function HeroSection() {
               style={{ objectFit: 'cover', objectPosition: 'center' }} /> :
 
 
-            <img
-              key={currentMedia.url}
-              src={currentMedia.url}
-              alt="Victor e Franco"
-              className="w-full h-full"
-              loading="eager"
-              fetchpriority="high"
-              style={{
-                objectFit: 'cover',
-                objectPosition: 'center',
-                display: 'block'
-              }} />
+            <picture className="w-full h-full block">
+              {currentMedia.mobile_url && (
+                <source media="(max-width: 768px)" srcSet={currentMedia.mobile_url} />
+              )}
+              <img
+                key={currentMedia.url}
+                src={currentMedia.url}
+                alt="Victor e Franco"
+                className="w-full h-full"
+                loading="eager"
+                fetchpriority="high"
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  display: 'block'
+                }}
+              />
+            </picture>
 
             }
             </> :

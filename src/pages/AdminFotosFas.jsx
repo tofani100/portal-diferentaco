@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, X, Trash2, Image, Clock, CheckCircle, Eye, EyeOff } from "lucide-react";
+import MediaSpecsBanner from "@/components/admin/MediaSpecsBanner";
 
 export default function AdminFotosFas() {
   const queryClient = useQueryClient();
@@ -138,6 +139,8 @@ export default function AdminFotosFas() {
             Aprove ou rejeite as fotos enviadas pelos fãs
           </p>
         </div>
+
+        <MediaSpecsBanner type="fan" />
 
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 bg-[#1A1A1A] border border-[#8B6F47]/30 mb-8">

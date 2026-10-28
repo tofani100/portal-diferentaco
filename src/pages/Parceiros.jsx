@@ -308,6 +308,9 @@ export default function Parceiros() {
                       <span className="text-[#D4C5B9] text-sm">
                         {uploading ? "Enviando..." : "Clique para selecionar o logo"}
                       </span>
+                      <span className="text-amber-300/80 text-xs mt-1">
+                        Recomendado: PNG com fundo transparente (aprox. 600 × 300 px)
+                      </span>
                       <input
                         type="file"
                         accept="image/*"

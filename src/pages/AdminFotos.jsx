@@ -24,6 +24,7 @@ export default function AdminFotos() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadStats, setUploadStats] = useState(null);
+  const [heroCardTab, setHeroCardTab] = useState({});
   const [uploadMethod, setUploadMethod] = useState("file"); // "file" or "url"
   const [filterPress, setFilterPress] = useState("all"); // "all", "visible", "hidden"
   const [filterRoad, setFilterRoad] = useState("all");
@@ -223,13 +224,13 @@ export default function AdminFotos() {
   const handleHeroMobileFileUpload = async (file, index) => {
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const result = await base44.integrations.Core.UploadFile({ file });
       const currentItems = heroConfig?.hero_media_items || [];
       const newItems = currentItems.map((item, i) => {
         if (i === index) {
           return {
             ...item,
-            mobile_url: file_url
+            mobile_url: result.file_url
           };
         }
         return item;
@@ -241,11 +242,13 @@ export default function AdminFotos() {
           hero_media_items: newItems
         }
       });
+      setHeroCardTab(prev => ({ ...prev, [index]: 'mobile' }));
+      await queryClient.invalidateQueries({ queryKey: ["siteConfig", "hero_media"] });
       await queryClient.refetchQueries({ queryKey: ["siteConfig", "hero_media"] });
       alert("Versão específica para Celular (9:16) adicionada com sucesso!");
     } catch (error) {
       console.error('Erro ao fazer upload mobile:', error);
-      alert('Erro ao fazer upload da versão mobile: ' + error.message);
+      alert('Erro ao fazer upload da versão mobile: ' + (error?.message || error));
     } finally {
       setUploading(false);
     }
@@ -485,44 +488,97 @@ export default function AdminFotos() {
                           Oculta
                         </div>
                       )}
-                      <div className="relative aspect-video">
-                        {item.type === 'video' ? (
-                          <video
-                            src={item.url}
-                            className={`w-full h-full object-cover ${item.visible === false ? 'opacity-50' : ''}`}
-                            muted
-                          />
-                        ) : (
-                          <img
-                            src={item.url}
-                            alt={`Mídia ${index + 1}`}
-                            className={`w-full h-full object-cover ${item.visible === false ? 'opacity-50' : ''}`}
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleToggleHeroVisibility(index)}
-                            className="text-white hover:text-blue-400"
-                            title={item.visible === false ? "Exibir" : "Ocultar"}
-                          >
-                            {item.visible === false ? <Eye className="w-6 h-6" /> : <EyeOff className="w-6 h-6" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteHeroMedia(index)}
-                            className="text-white hover:text-red-500"
-                            title="Deletar permanentemente"
-                          >
-                            <Trash2 className="w-6 h-6" />
-                          </Button>
-                        </div>
-                        <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                          {item.type === 'video' ? 'Vídeo' : 'Imagem'}
-                        </div>
+                      {/* Visualizador Alternável Desktop 16:9 / Celular 9:16 */}
+                      <div className="flex border-b border-[#8B6F47]/20 bg-black/60 select-none">
+                        <button
+                          type="button"
+                          onClick={() => setHeroCardTab(prev => ({ ...prev, [index]: 'desktop' }))}
+                          className={`flex-1 py-1.5 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors ${
+                            (heroCardTab[index] || 'desktop') === 'desktop'
+                              ? 'bg-[#8B6F47]/40 text-amber-300 border-b-2 border-amber-400'
+                              : 'text-[#D4C5B9] hover:text-white'
+                          }`}
+                        >
+                          <Monitor className="w-3 h-3" /> Desktop (16:9)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHeroCardTab(prev => ({ ...prev, [index]: 'mobile' }))}
+                          className={`flex-1 py-1.5 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors ${
+                            heroCardTab[index] === 'mobile'
+                              ? 'bg-[#8B6F47]/40 text-emerald-300 border-b-2 border-emerald-400'
+                              : 'text-[#D4C5B9] hover:text-white'
+                          }`}
+                        >
+                          <Smartphone className="w-3 h-3" /> Celular (9:16)
+                          {item.mobile_url && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>}
+                        </button>
                       </div>
+
+                      {/* Área da Imagem / Vídeo */}
+                      {(heroCardTab[index] || 'desktop') === 'desktop' ? (
+                        <div className="relative aspect-video bg-black/80">
+                          {item.type === 'video' ? (
+                            <video
+                              src={item.url}
+                              className={`w-full h-full object-cover ${item.visible === false ? 'opacity-50' : ''}`}
+                              muted
+                            />
+                          ) : (
+                            <img
+                              src={item.url}
+                              alt={`Mídia Desktop ${index + 1}`}
+                              className={`w-full h-full object-cover ${item.visible === false ? 'opacity-50' : ''}`}
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleToggleHeroVisibility(index)}
+                              className="text-white hover:text-blue-400"
+                              title={item.visible === false ? "Exibir" : "Ocultar"}
+                            >
+                              {item.visible === false ? <Eye className="w-6 h-6" /> : <EyeOff className="w-6 h-6" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteHeroMedia(index)}
+                              className="text-white hover:text-red-500"
+                              title="Deletar permanentemente"
+                            >
+                              <Trash2 className="w-6 h-6" />
+                            </Button>
+                          </div>
+                          <div className="absolute bottom-2 left-2 bg-black/80 text-white text-[11px] px-2 py-0.5 rounded-full border border-white/10">
+                            {item.type === 'video' ? 'Vídeo Widescreen' : 'Foto Widescreen 16:9'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative aspect-video bg-gradient-to-b from-[#181818] to-black flex items-center justify-center p-2">
+                          {item.mobile_url ? (
+                            <div className="relative h-full aspect-[9/16] rounded-md overflow-hidden shadow-2xl border-2 border-emerald-500/60 bg-black">
+                              <img
+                                src={item.mobile_url}
+                                alt={`Mídia Mobile ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute top-1 left-1 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                                9:16 Ativo
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center p-2 flex flex-col items-center justify-center">
+                              <Smartphone className="w-7 h-7 text-[#8B6F47] mb-1 opacity-60" />
+                              <p className="text-[11px] text-[#D4C5B9] leading-tight">
+                                Sem foto vertical 9:16 enviada.<br />
+                                <span className="text-amber-400 text-[10px]">O celular usará o recorte central.</span>
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Desktop / Mobile info & actions */}
                       <div className="p-3 border-t border-[#8B6F47]/20 flex flex-col gap-2 bg-[#141414]">

@@ -3,13 +3,15 @@
     "config_key": "hero_media",
     "hero_media_items": [
       {
-        "url": "/assets/media/be6493446_porteamar.jpg",
-        "type": "image"
+        "url": "/assets/media/diferentaco_sertaozinho_desktop.webp",
+        "mobile_url": "/assets/media/diferentaco_sertaozinho_mobile.webp",
+        "type": "image",
+        "visible": true
       }
     ],
     "id": "6906e608c17a0ea23e6ae570",
-    "created_date": "2025-11-02T05:03:04.301000",
-    "updated_date": "2025-12-14T21:25:54.258000",
+    "created_date": "2026-10-28T00:00:00.000000",
+    "updated_date": "2026-10-28T02:00:00.000000",
     "created_by_id": "6906ca5e85d3d7007a37ecf1",
     "created_by": "tofani100@gmail.com",
     "is_sample": false

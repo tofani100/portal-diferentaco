@@ -1,5 +1,18 @@
 [
   {
+    "fan_name": "Victor e Franco",
+    "fan_city": "Sertãozinho - SP",
+    "photo_url": "/assets/media/diferentaco_sertaozinho_desktop.webp",
+    "approved": true,
+    "visible": true,
+    "id": "fan_photo_sertaozinho_promo",
+    "created_date": "2026-10-28T02:15:00.000000",
+    "updated_date": "2026-10-28T02:15:00.000000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
     "fan_name": "Eu fui",
     "fan_city": "Assis - SP",
     "photo_url": "/assets/media/3b5cf3521_WhatsAppImage2025-11-30at102440.jpeg",

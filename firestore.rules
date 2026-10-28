@@ -1,0 +1,632 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Application: Portal Oficial da dupla sertaneja Victor & Franco (Portal Diferentaço)
+// Project ID: playcomunique-site
+//
+// Dual Environment Structure:
+//   - DEV:  dev_[CollectionName]
+//   - PROD: prod_[CollectionName]
+//
+// Authentication Note:
+//   In this project, Firebase Auth (Identity Toolkit) is unprovisioned, so all client
+//   operations (both public visitors and the administrative portal) run with
+//   request.auth == null. Access control and data integrity are enforced through
+//   strict domain validators, type assertions, length bounds, immutable field
+//   protection, and fan submission approval gates.
+//
+// Collections and Assumed Schemas:
+//
+// 1. SiteConfig (dev_SiteConfig, prod_SiteConfig)
+//    - config_key: string (required, 1..100 chars)
+//    - hero_media_items: list of maps (optional, max 20 items)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 2. Event (dev_Event, prod_Event)
+//    - date: string | timestamp (required, 1..50 chars)
+//    - city: string (required, 1..100 chars)
+//    - state: string (required, 1..50 chars)
+//    - venue: string (required, 1..150 chars)
+//    - ticket_link: string (optional, max 1000 chars)
+//    - status: string (optional, 'upcoming'|'past'|'cancelled'|etc.)
+//    - visible: bool (optional)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 3. Photo (dev_Photo, prod_Photo)
+//    - image_url: string (required, 1..2000000 chars)
+//    - album: string (optional, 1..100 chars)
+//    - caption: string (optional, max 500 chars)
+//    - visible: bool (optional)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 4. FanPhoto (dev_FanPhoto, prod_FanPhoto)
+//    - photo_url: string (required, 1..2000000 chars)
+//    - fan_name / author_name: string (required, 1..100 chars)
+//    - fan_city / author_city: string (optional, max 100 chars)
+//    - approved: bool (required; MUST be false on public create; updated to true by admin)
+//    - visible: bool (optional)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 5. Video (dev_Video, prod_Video)
+//    - title: string (required, 1..200 chars)
+//    - youtube_id / video_url: string (required, 1..1000 chars)
+//    - video_type: string (optional, max 50 chars)
+//    - thumbnail_url: string (optional, max 1000 chars)
+//    - description: string (optional, max 2000 chars)
+//    - featured: bool (optional)
+//    - visible: bool (optional)
+//    - order: number (optional)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 6. Partner (dev_Partner, prod_Partner)
+//    - name: string (required, 1..150 chars)
+//    - logo_url: string (optional, max 1000 chars)
+//    - website_url: string (optional, max 1000 chars)
+//    - whatsapp: string (optional, max 50 chars)
+//    - email: string (optional, max 150 chars)
+//    - order: number (optional)
+//    - visible: bool (optional)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 7. MapPin (dev_MapPin, prod_MapPin)
+//    - city: string (required, 1..100 chars)
+//    - state: string (required, 1..50 chars)
+//    - show_date: string (optional, max 50 chars)
+//    - message: string (optional, max 1000 chars)
+//    - photos: list of strings (optional, max 20 items)
+//    - latitude, longitude: number (optional)
+//    - visible: bool (optional)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 8. ContactRequest (dev_ContactRequest, prod_ContactRequest)
+//    - contractor_name: string (required, 1..150 chars)
+//    - email: string (optional, max 150 chars, valid email format)
+//    - phone: string (optional, max 50 chars)
+//    - event_city: string (optional, max 100 chars)
+//    - event_state: string (optional, max 50 chars)
+//    - event_date: string (optional, max 50 chars)
+//    - message: string (optional, max 3000 chars)
+//    - id, created_date, updated_date, created_by, created_by_id, visible (metadata)
+//
+// 9. FeaturedTrack (dev_FeaturedTrack, prod_FeaturedTrack)
+//    - title: string (required, 1..200 chars)
+//    - media_url: string (required, 1..1000 chars)
+//    - media_type: string (optional, max 50 chars)
+//    - order: number (optional)
+//    - visible: bool (optional)
+//    - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 10. NewsletterSubscriber (dev_NewsletterSubscriber, prod_NewsletterSubscriber)
+//     - name: string (required, 1..150 chars)
+//     - email: string (optional, max 150 chars, valid email)
+//     - whatsapp: string (optional, max 50 chars)
+//     - city: string (optional, max 100 chars)
+//     - state: string (optional, max 50 chars)
+//     - notify_shows: bool (optional)
+//     - notify_news: bool (optional)
+//     - active: bool (optional)
+//     - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 11. Testimonial (dev_Testimonial, prod_Testimonial)
+//     - author_name: string (required, 1..150 chars)
+//     - content: string (required, 1..3000 chars)
+//     - author_role: string (optional, max 50 chars)
+//     - author_city: string (optional, max 100 chars)
+//     - author_photo: string (optional, max 1000 chars)
+//     - rating: number (optional, 1..5)
+//     - event_date: string (optional, max 50 chars)
+//     - approved: bool (optional)
+//     - featured: bool (optional)
+//     - visible: bool (optional)
+//     - id, created_date, updated_date, created_by, created_by_id, is_sample (metadata)
+//
+// 12. Poll (dev_Poll, prod_Poll)
+//     - question: string (required, 1..300 chars)
+//     - options: list of maps (required, 2..20 items)
+//     - category: string (optional, max 50 chars)
+//     - active: bool (optional)
+//     - featured: bool (optional)
+//     - end_date: string (optional, max 50 chars)
+//     - id, created_date, updated_date, created_by, created_by_id, is_sample, visible (metadata)
+//
+// 13. PollVote (dev_PollVote, prod_PollVote)
+//     - poll_id: string (required, 1..100 chars)
+//     - option_id: string (required, 1..100 chars)
+//     - voter_identifier: string (required, 1..150 chars)
+//     - id, created_date, updated_date, created_by, created_by_id, visible (metadata)
+//
+// 14. User (dev_User, prod_User)
+//     - email: string (required, max 150 chars, valid email)
+//     - role: string (required, max 50 chars)
+//     - full_name: string (optional, max 150 chars)
+//     - is_verified: bool (optional)
+//     - collaborator_role: string (optional, max 50 chars)
+//     - _app_role: string (optional, max 50 chars)
+//     - app_id: string (optional, max 100 chars)
+//     - is_service: bool (optional)
+//     - disabled: bool (optional)
+//     - disabled_reason: string (optional, max 200 chars)
+//     - force_password_reset: bool (optional)
+//     - id, created_date, updated_date (metadata)
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Format validation: Email
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // Format validation: Optional or nullable string
+    function isOptString(data, field, maxLen) {
+      return !(field in data) ||
+             data[field] == null ||
+             (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    // Format validation: Optional boolean
+    function isOptBool(data, field) {
+      return !(field in data) || data[field] == null || data[field] is bool;
+    }
+
+    // Format validation: Optional number
+    function isOptNumber(data, field) {
+      return !(field in data) || data[field] == null || data[field] is number;
+    }
+
+    // Format validation: Optional timestamp/date representation
+    function isOptDate(data, field) {
+      return !(field in data) ||
+             data[field] == null ||
+             data[field] is timestamp ||
+             (data[field] is string && data[field].size() <= 50);
+    }
+
+    // Ensure document ID and creation timestamp remain unchanged during updates
+    function areImmutableFieldsUnchanged() {
+      return (!('id' in resource.data) || !('id' in request.resource.data) || request.resource.data.id == resource.data.id) &&
+             (!('created_date' in resource.data) || !('created_date' in request.resource.data) || request.resource.data.created_date == resource.data.created_date);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidSiteConfig(data) {
+      return ('config_key' in data) &&
+        data.config_key is string && data.config_key.size() >= 1 && data.config_key.size() <= 100 &&
+        (!('hero_media_items' in data) || (data.hero_media_items is list && data.hero_media_items.size() <= 20)) &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidEvent(data) {
+      return ('city' in data) && data.city is string && data.city.size() >= 1 && data.city.size() <= 100 &&
+        ('state' in data) && data.state is string && data.state.size() >= 1 && data.state.size() <= 50 &&
+        ('venue' in data) && data.venue is string && data.venue.size() >= 1 && data.venue.size() <= 150 &&
+        ('date' in data) && (data.date is timestamp || (data.date is string && data.date.size() >= 1 && data.date.size() <= 50)) &&
+        isOptString(data, 'ticket_link', 1000) &&
+        isOptString(data, 'status', 50) &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidPhoto(data) {
+      return ('image_url' in data) &&
+        data.image_url is string && data.image_url.size() >= 1 && data.image_url.size() <= 2000000 &&
+        isOptString(data, 'album', 100) &&
+        isOptString(data, 'caption', 500) &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidFanPhoto(data) {
+      return ('photo_url' in data) &&
+        data.photo_url is string && data.photo_url.size() >= 1 && data.photo_url.size() <= 2000000 &&
+        (('fan_name' in data && data.fan_name is string && data.fan_name.size() >= 1 && data.fan_name.size() <= 100) ||
+         ('author_name' in data && data.author_name is string && data.author_name.size() >= 1 && data.author_name.size() <= 100)) &&
+        isOptString(data, 'fan_city', 100) &&
+        isOptString(data, 'author_city', 100) &&
+        ('approved' in data) && data.approved is bool &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    // Public fan photo submission: visitors cannot auto-approve their own submissions
+    function isValidFanPhotoPublicCreate(data) {
+      return isValidFanPhoto(data) && data.approved == false;
+    }
+
+    function isValidVideo(data) {
+      return ('title' in data) && data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        (('youtube_id' in data && data.youtube_id is string && data.youtube_id.size() <= 1000) ||
+         ('video_url' in data && data.video_url is string && data.video_url.size() <= 1000)) &&
+        isOptString(data, 'video_type', 50) &&
+        isOptString(data, 'thumbnail_url', 1000) &&
+        isOptString(data, 'description', 2000) &&
+        isOptBool(data, 'featured') &&
+        isOptBool(data, 'visible') &&
+        isOptNumber(data, 'order') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidPartner(data) {
+      return ('name' in data) && data.name is string && data.name.size() >= 1 && data.name.size() <= 150 &&
+        isOptString(data, 'logo_url', 1000) &&
+        isOptString(data, 'website_url', 1000) &&
+        isOptString(data, 'whatsapp', 50) &&
+        isOptString(data, 'email', 150) &&
+        isOptNumber(data, 'order') &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidMapPin(data) {
+      return ('city' in data) && data.city is string && data.city.size() >= 1 && data.city.size() <= 100 &&
+        ('state' in data) && data.state is string && data.state.size() >= 1 && data.state.size() <= 50 &&
+        isOptDate(data, 'show_date') &&
+        isOptString(data, 'message', 1000) &&
+        (!('photos' in data) || (data.photos is list && data.photos.size() <= 20)) &&
+        isOptNumber(data, 'latitude') &&
+        isOptNumber(data, 'longitude') &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidContactRequest(data) {
+      return ('contractor_name' in data) &&
+        data.contractor_name is string && data.contractor_name.size() >= 1 && data.contractor_name.size() <= 150 &&
+        (('email' in data && data.email is string && data.email.size() > 0 && isValidEmail(data.email) && data.email.size() <= 150) ||
+         ('phone' in data && data.phone is string && data.phone.size() >= 5 && data.phone.size() <= 50)) &&
+        isOptString(data, 'event_city', 100) &&
+        isOptString(data, 'event_state', 50) &&
+        isOptString(data, 'event_date', 50) &&
+        isOptString(data, 'message', 3000) &&
+        isOptBool(data, 'visible') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidFeaturedTrack(data) {
+      return ('title' in data) && data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        ('media_url' in data) && data.media_url is string && data.media_url.size() >= 1 && data.media_url.size() <= 1000 &&
+        isOptString(data, 'media_type', 50) &&
+        isOptNumber(data, 'order') &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidNewsletterSubscriber(data) {
+      return ('name' in data) && data.name is string && data.name.size() >= 1 && data.name.size() <= 150 &&
+        (('email' in data && data.email != null && data.email is string && data.email.size() > 0 && isValidEmail(data.email) && data.email.size() <= 150) ||
+         ('whatsapp' in data && data.whatsapp != null && data.whatsapp is string && data.whatsapp.size() >= 5 && data.whatsapp.size() <= 50)) &&
+        isOptString(data, 'city', 100) &&
+        isOptString(data, 'state', 50) &&
+        isOptBool(data, 'notify_shows') &&
+        isOptBool(data, 'notify_news') &&
+        isOptBool(data, 'active') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidTestimonial(data) {
+      return ('author_name' in data) && data.author_name is string && data.author_name.size() >= 1 && data.author_name.size() <= 150 &&
+        ('content' in data) && data.content is string && data.content.size() >= 1 && data.content.size() <= 3000 &&
+        isOptString(data, 'author_role', 50) &&
+        isOptString(data, 'author_city', 100) &&
+        isOptString(data, 'author_photo', 1000) &&
+        (!('rating' in data) || (data.rating is number && data.rating >= 1 && data.rating <= 5)) &&
+        isOptDate(data, 'event_date') &&
+        isOptBool(data, 'approved') &&
+        isOptBool(data, 'featured') &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidPoll(data) {
+      return ('question' in data) && data.question is string && data.question.size() >= 1 && data.question.size() <= 300 &&
+        ('options' in data) && data.options is list && data.options.size() >= 2 && data.options.size() <= 20 &&
+        isOptString(data, 'category', 50) &&
+        isOptBool(data, 'active') &&
+        isOptBool(data, 'featured') &&
+        isOptDate(data, 'end_date') &&
+        isOptBool(data, 'visible') &&
+        isOptBool(data, 'is_sample') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidPollVote(data) {
+      return ('poll_id' in data) && data.poll_id is string && data.poll_id.size() >= 1 && data.poll_id.size() <= 100 &&
+        ('option_id' in data) && data.option_id is string && data.option_id.size() >= 1 && data.option_id.size() <= 100 &&
+        ('voter_identifier' in data) && data.voter_identifier is string && data.voter_identifier.size() >= 1 && data.voter_identifier.size() <= 150 &&
+        isOptBool(data, 'visible') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    function isValidUser(data) {
+      return ('email' in data) && data.email is string && data.email.size() >= 3 && data.email.size() <= 150 && isValidEmail(data.email) &&
+        ('role' in data) && data.role is string && data.role.size() >= 1 && data.role.size() <= 50 &&
+        isOptString(data, 'full_name', 150) &&
+        isOptBool(data, 'is_verified') &&
+        isOptString(data, 'collaborator_role', 50) &&
+        isOptString(data, '_app_role', 50) &&
+        isOptString(data, 'app_id', 100) &&
+        isOptBool(data, 'is_service') &&
+        isOptBool(data, 'disabled') &&
+        isOptString(data, 'disabled_reason', 200) &&
+        isOptBool(data, 'force_password_reset') &&
+        isOptString(data, 'id', 100) &&
+        isOptDate(data, 'created_date') &&
+        isOptDate(data, 'updated_date');
+    }
+
+    // ===============================================================
+    // 1. SiteConfig (DEV & PROD)
+    // ===============================================================
+    match /dev_SiteConfig/{docId} {
+      allow read: if true;
+      allow create: if isValidSiteConfig(request.resource.data);
+      allow update: if isValidSiteConfig(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_SiteConfig/{docId} {
+      allow read: if true;
+      allow create: if isValidSiteConfig(request.resource.data);
+      allow update: if isValidSiteConfig(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 2. Event (DEV & PROD)
+    // ===============================================================
+    match /dev_Event/{docId} {
+      allow read: if true;
+      allow create: if isValidEvent(request.resource.data);
+      allow update: if isValidEvent(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_Event/{docId} {
+      allow read: if true;
+      allow create: if isValidEvent(request.resource.data);
+      allow update: if isValidEvent(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 3. Photo (DEV & PROD)
+    // ===============================================================
+    match /dev_Photo/{docId} {
+      allow read: if true;
+      allow create: if isValidPhoto(request.resource.data);
+      allow update: if isValidPhoto(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_Photo/{docId} {
+      allow read: if true;
+      allow create: if isValidPhoto(request.resource.data);
+      allow update: if isValidPhoto(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 4. FanPhoto (DEV & PROD)
+    // Public fans can submit photos (approved must be false)
+    // Admins can update fan photos to approve them, or delete them
+    // ===============================================================
+    match /dev_FanPhoto/{docId} {
+      allow read: if true;
+      allow create: if isValidFanPhotoPublicCreate(request.resource.data);
+      allow update: if isValidFanPhoto(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_FanPhoto/{docId} {
+      allow read: if true;
+      allow create: if isValidFanPhotoPublicCreate(request.resource.data);
+      allow update: if isValidFanPhoto(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 5. Video (DEV & PROD)
+    // ===============================================================
+    match /dev_Video/{docId} {
+      allow read: if true;
+      allow create: if isValidVideo(request.resource.data);
+      allow update: if isValidVideo(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_Video/{docId} {
+      allow read: if true;
+      allow create: if isValidVideo(request.resource.data);
+      allow update: if isValidVideo(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 6. Partner (DEV & PROD)
+    // ===============================================================
+    match /dev_Partner/{docId} {
+      allow read: if true;
+      allow create: if isValidPartner(request.resource.data);
+      allow update: if isValidPartner(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_Partner/{docId} {
+      allow read: if true;
+      allow create: if isValidPartner(request.resource.data);
+      allow update: if isValidPartner(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 7. MapPin (DEV & PROD)
+    // ===============================================================
+    match /dev_MapPin/{docId} {
+      allow read: if true;
+      allow create: if isValidMapPin(request.resource.data);
+      allow update: if isValidMapPin(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_MapPin/{docId} {
+      allow read: if true;
+      allow create: if isValidMapPin(request.resource.data);
+      allow update: if isValidMapPin(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 8. ContactRequest (DEV & PROD)
+    // ===============================================================
+    match /dev_ContactRequest/{docId} {
+      allow read: if true;
+      allow create: if isValidContactRequest(request.resource.data);
+      allow update: if isValidContactRequest(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_ContactRequest/{docId} {
+      allow read: if true;
+      allow create: if isValidContactRequest(request.resource.data);
+      allow update: if isValidContactRequest(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 9. FeaturedTrack (DEV & PROD)
+    // ===============================================================
+    match /dev_FeaturedTrack/{docId} {
+      allow read: if true;
+      allow create: if isValidFeaturedTrack(request.resource.data);
+      allow update: if isValidFeaturedTrack(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_FeaturedTrack/{docId} {
+      allow read: if true;
+      allow create: if isValidFeaturedTrack(request.resource.data);
+      allow update: if isValidFeaturedTrack(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 10. NewsletterSubscriber (DEV & PROD)
+    // ===============================================================
+    match /dev_NewsletterSubscriber/{docId} {
+      allow read: if true;
+      allow create: if isValidNewsletterSubscriber(request.resource.data);
+      allow update: if isValidNewsletterSubscriber(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_NewsletterSubscriber/{docId} {
+      allow read: if true;
+      allow create: if isValidNewsletterSubscriber(request.resource.data);
+      allow update: if isValidNewsletterSubscriber(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 11. Testimonial (DEV & PROD)
+    // ===============================================================
+    match /dev_Testimonial/{docId} {
+      allow read: if true;
+      allow create: if isValidTestimonial(request.resource.data);
+      allow update: if isValidTestimonial(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_Testimonial/{docId} {
+      allow read: if true;
+      allow create: if isValidTestimonial(request.resource.data);
+      allow update: if isValidTestimonial(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 12. Poll (DEV & PROD)
+    // ===============================================================
+    match /dev_Poll/{docId} {
+      allow read: if true;
+      allow create: if isValidPoll(request.resource.data);
+      allow update: if isValidPoll(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_Poll/{docId} {
+      allow read: if true;
+      allow create: if isValidPoll(request.resource.data);
+      allow update: if isValidPoll(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 13. PollVote (DEV & PROD)
+    // ===============================================================
+    match /dev_PollVote/{docId} {
+      allow read: if true;
+      allow create: if isValidPollVote(request.resource.data);
+      allow update: if isValidPollVote(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_PollVote/{docId} {
+      allow read: if true;
+      allow create: if isValidPollVote(request.resource.data);
+      allow update: if isValidPollVote(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+
+    // ===============================================================
+    // 14. User (DEV & PROD)
+    // ===============================================================
+    match /dev_User/{userId} {
+      allow read: if true;
+      allow create: if isValidUser(request.resource.data);
+      allow update: if isValidUser(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+    match /prod_User/{userId} {
+      allow read: if true;
+      allow create: if isValidUser(request.resource.data);
+      allow update: if isValidUser(request.resource.data) && areImmutableFieldsUnchanged();
+      allow delete: if true;
+    }
+  }
+}

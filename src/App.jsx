@@ -24,14 +24,20 @@ import AdminDepoimentos from "./pages/AdminDepoimentos";
 import AdminEnquetes from "./pages/AdminEnquetes";
 import AdminNewsletter from "./pages/AdminNewsletter";
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: true,
+      staleTime: 1000 * 5, // 5 seconds
     },
   },
 });
+
+if (typeof window !== "undefined") {
+  window.addEventListener("databaseHydrated", () => {
+    queryClient.invalidateQueries();
+  });
+}
 
 export default function App() {
   return (

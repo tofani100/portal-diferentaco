@@ -1,2 +1,2 @@
 // Versão atual do ambiente de desenvolvimento
-export const APP_VERSION = "V16";
+export const APP_VERSION = "V17";

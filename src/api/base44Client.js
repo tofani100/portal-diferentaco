@@ -1,5 +1,4 @@
-// Standalone Base44-compatible client
-// 100% independent from base44.com - fully persistent in IndexedDB + localStorage with fallback to initial data
+// Standalone Base44-compatible client with Firebase Firestore Cloud Sync + Local Offline Fallback
 import eventInitial from './data/Event.json';
 import photoInitial from './data/Photo.json';
 import fanPhotoInitial from './data/FanPhoto.json';
@@ -14,9 +13,18 @@ import testimonialInitial from './data/Testimonial.json';
 import pollInitial from './data/Poll.json';
 import pollVoteInitial from './data/PollVote.json';
 import userInitial from './data/User.json';
-import { idbGet, idbSet, idbRemove } from './indexedDbStorage';
+import { idbGet, idbSet } from './indexedDbStorage';
 import { compressImage } from '@/utils/imageOptimizer';
 import { APP_VERSION } from '@/version';
+import { db } from './firebaseClient';
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  writeBatch
+} from 'firebase/firestore';
 
 const INITIAL_DATA = {
   Event: eventInitial,
@@ -35,8 +43,67 @@ const INITIAL_DATA = {
   User: userInitial,
 };
 
+const isProd = import.meta.env.VITE_APP_ENV === 'production';
+const FIRESTORE_PREFIX = isProd ? 'prod_' : 'dev_';
 const STORAGE_PREFIX = import.meta.env.VITE_STORAGE_PREFIX || 'portal_diferentaco_db_dev_';
 const MEMORY_CACHE = {};
+
+// Helper: Seed Firestore collection with initial data if collection is empty
+const seededCollections = new Set();
+async function seedFirestoreEntity(entity) {
+  if (seededCollections.has(entity)) return;
+  seededCollections.add(entity);
+
+  try {
+    const items = INITIAL_DATA[entity];
+    if (!items || !Array.isArray(items) || items.length === 0) return;
+
+    console.log(`[Firestore] Seeding ${FIRESTORE_PREFIX}${entity} with initial dataset...`);
+    const batch = writeBatch(db);
+    // Firestore batches limit to 500 operations
+    const toSeed = items.slice(0, 50);
+    toSeed.forEach(item => {
+      const docId = item.id || generateId();
+      const docRef = doc(db, `${FIRESTORE_PREFIX}${entity}`, docId);
+      batch.set(docRef, { ...item, id: docId }, { merge: true });
+    });
+    await batch.commit();
+    console.log(`[Firestore] Successfully seeded ${toSeed.length} items in ${FIRESTORE_PREFIX}${entity}`);
+  } catch (err) {
+    console.warn(`[Firestore] Note on seeding ${entity}:`, err?.message || err);
+  }
+}
+
+// Subscribe each entity to Firestore in real time
+function initFirestoreSync(entity) {
+  if (typeof window === 'undefined') return;
+  try {
+    const colRef = collection(db, `${FIRESTORE_PREFIX}${entity}`);
+    onSnapshot(colRef, (snapshot) => {
+      if (!snapshot.empty) {
+        const cloudItems = [];
+        snapshot.forEach(docSnap => {
+          cloudItems.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        MEMORY_CACHE[entity] = cloudItems;
+        idbSet(`${STORAGE_PREFIX}${entity}`, cloudItems).catch(() => {});
+        try {
+          localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(cloudItems));
+        } catch (e) {}
+
+        window.dispatchEvent(new CustomEvent('databaseHydrated', { detail: { entity, items: cloudItems } }));
+      } else {
+        // If empty in Firestore, seed it once with the initial bundle
+        seedFirestoreEntity(entity);
+      }
+    }, (error) => {
+      console.warn(`[Firestore] Realtime sync listener warning on ${entity}:`, error?.message || error);
+    });
+  } catch (e) {
+    console.warn(`[Firestore] Sync init warning for ${entity}:`, e);
+  }
+}
 
 // Asynchronously hydrate MEMORY_CACHE from IndexedDB (or localStorage fallback) + Auto-Migrate Stale Cache
 if (typeof window !== 'undefined') {
@@ -44,40 +111,53 @@ if (typeof window !== 'undefined') {
     const currentVersionKey = `${STORAGE_PREFIX}app_version`;
     const storedVersion = localStorage.getItem(currentVersionKey);
 
-    // If SiteConfig in localStorage still has the old deleted photo "porteamar.jpg" or lacks mobile_url, refresh it!
+    // If upgrading to a new version (e.g. V17) or old cached photo/events detected, refresh to fresh snapshot
+    if (storedVersion !== APP_VERSION) {
+      console.log(`[Base44] Version change detected (${storedVersion} -> ${APP_VERSION}). Refreshing local storage caches...`);
+      localStorage.setItem(currentVersionKey, APP_VERSION);
+      // Clean up stale configs from previous iterations
+      Object.keys(INITIAL_DATA).forEach((entity) => {
+        const fresh = JSON.parse(JSON.stringify(INITIAL_DATA[entity]));
+        MEMORY_CACHE[entity] = fresh;
+        try {
+          localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(fresh));
+        } catch (e) {}
+        idbSet(`${STORAGE_PREFIX}${entity}`, fresh).catch(() => {});
+      });
+    }
+
+    // Clean old deleted banner if still residing in storage
     const rawSiteConfig = localStorage.getItem(`${STORAGE_PREFIX}SiteConfig`);
     if (rawSiteConfig) {
       const parsedConfig = JSON.parse(rawSiteConfig);
       const configStr = JSON.stringify(parsedConfig);
       if (configStr.includes('porteamar.jpg') || !parsedConfig[0]?.hero_media_items?.[0]?.mobile_url) {
-        console.log('[Base44] Stale SiteConfig detected with old deleted photo. Upgrading to official Sertãozinho banners...');
         const freshConfig = JSON.parse(JSON.stringify(siteConfigInitial));
         MEMORY_CACHE['SiteConfig'] = freshConfig;
         localStorage.setItem(`${STORAGE_PREFIX}SiteConfig`, JSON.stringify(freshConfig));
         idbSet(`${STORAGE_PREFIX}SiteConfig`, freshConfig);
       }
     }
-
-    if (storedVersion !== APP_VERSION) {
-      localStorage.setItem(currentVersionKey, APP_VERSION);
-    }
   } catch (e) {
     console.warn('[Base44] Migration warning:', e);
   }
 
+  // 1. Initial fast synchronous hydration from localStorage/InitialData
   Object.keys(INITIAL_DATA).forEach((entity) => {
-    // 1. Try fast synchronous localStorage first
     try {
       const raw = localStorage.getItem(`${STORAGE_PREFIX}${entity}`);
       if (raw) {
         MEMORY_CACHE[entity] = JSON.parse(raw);
+      } else {
+        MEMORY_CACHE[entity] = JSON.parse(JSON.stringify(INITIAL_DATA[entity]));
       }
-    } catch (e) {}
+    } catch (e) {
+      MEMORY_CACHE[entity] = JSON.parse(JSON.stringify(INITIAL_DATA[entity]));
+    }
 
-    // 2. Hydrate from IndexedDB (can store much larger datasets without 5MB quota)
+    // 2. Hydrate from IndexedDB for large datasets
     idbGet(`${STORAGE_PREFIX}${entity}`).then((idbData) => {
       if (idbData && Array.isArray(idbData) && idbData.length > 0) {
-        // Prevent resurrecting the old deleted photo if IndexedDB had it cached previously
         if (entity === 'SiteConfig' && JSON.stringify(idbData).includes('porteamar.jpg')) {
           idbSet(`${STORAGE_PREFIX}SiteConfig`, siteConfigInitial);
           MEMORY_CACHE['SiteConfig'] = siteConfigInitial;
@@ -87,6 +167,9 @@ if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('databaseHydrated', { detail: { entity } }));
       }
     }).catch(() => {});
+
+    // 3. Connect real-time Firestore sync
+    initFirestoreSync(entity);
   });
 }
 
@@ -96,6 +179,7 @@ export function getEnvironmentInfo() {
     env,
     name: import.meta.env.VITE_APP_NAME || 'Portal Diferentaço (DEV)',
     prefix: STORAGE_PREFIX,
+    firestorePrefix: FIRESTORE_PREFIX,
     isDev: env === 'development',
     prodUrl: import.meta.env.VITE_PROD_URL || 'https://victorefranco.com.br',
     showBadge: import.meta.env.VITE_SHOW_ENV_BADGE === 'true' || env === 'development'
@@ -111,6 +195,16 @@ export async function resetToProductionSnapshot() {
       try {
         localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(clone));
       } catch (e) {}
+
+      // Reseed Firestore with clean clone
+      try {
+        const batch = writeBatch(db);
+        clone.slice(0, 50).forEach(item => {
+          const docId = item.id || generateId();
+          batch.set(doc(db, `${FIRESTORE_PREFIX}${entity}`, docId), { ...item, id: docId });
+        });
+        await batch.commit();
+      } catch (err) {}
     }
     window.dispatchEvent(new CustomEvent('databaseReset'));
     return true;
@@ -166,6 +260,9 @@ function setStorage(entity, data) {
   } catch (e) {
     console.warn(`[LocalStorage] Quota reached for ${entity}; safely saved in IndexedDB.`);
   }
+
+  // 4. Dispatch hydration event
+  window.dispatchEvent(new CustomEvent('databaseHydrated', { detail: { entity, items: data } }));
 }
 
 function generateId() {
@@ -203,7 +300,6 @@ function matchesQuery(record, query) {
   if (!query) return true;
   for (const [key, val] of Object.entries(query)) {
     if (val === undefined) continue;
-    // Support boolean query matching for flags like approved, visible, etc.
     if (typeof val === 'boolean') {
       const recVal = Boolean(record[key]);
       if (recVal !== val) return false;
@@ -255,8 +351,19 @@ function createEntityHandlers(entityName) {
         created_by_id: '6906ca5e85d3d7007a37ecf1',
         created_by: 'tofani100@gmail.com'
       };
+
+      // 1. Immediately update local storage and memory
       records.unshift(newRecord);
       setStorage(entityName, records);
+
+      // 2. Sync to Firestore in cloud
+      try {
+        const docRef = doc(db, `${FIRESTORE_PREFIX}${entityName}`, newRecord.id);
+        await setDoc(docRef, newRecord);
+      } catch (err) {
+        console.warn(`[Firestore] Sync warning creating ${entityName}:`, err?.message || err);
+      }
+
       return newRecord;
     },
 
@@ -272,8 +379,19 @@ function createEntityHandlers(entityName) {
         id,
         updated_date: new Date().toISOString()
       };
+
+      // 1. Update local storage and memory
       records[idx] = updated;
       setStorage(entityName, records);
+
+      // 2. Sync to Firestore in cloud
+      try {
+        const docRef = doc(db, `${FIRESTORE_PREFIX}${entityName}`, id);
+        await setDoc(docRef, updated, { merge: true });
+      } catch (err) {
+        console.warn(`[Firestore] Sync warning updating ${entityName}:`, err?.message || err);
+      }
+
       return updated;
     },
 
@@ -281,13 +399,35 @@ function createEntityHandlers(entityName) {
       let records = getStorage(entityName);
       records = records.filter(r => r.id !== id);
       setStorage(entityName, records);
+
+      // Sync to Firestore in cloud
+      try {
+        const docRef = doc(db, `${FIRESTORE_PREFIX}${entityName}`, id);
+        await deleteDoc(docRef);
+      } catch (err) {
+        console.warn(`[Firestore] Sync warning deleting ${entityName}:`, err?.message || err);
+      }
+
       return { success: true, id };
     },
 
     async deleteMany(query) {
       let records = getStorage(entityName);
+      const toDelete = records.filter(item => matchesQuery(item, query));
       records = records.filter(item => !matchesQuery(item, query));
       setStorage(entityName, records);
+
+      // Sync deletes to Firestore
+      try {
+        const batch = writeBatch(db);
+        toDelete.forEach(item => {
+          batch.delete(doc(db, `${FIRESTORE_PREFIX}${entityName}`, item.id));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn(`[Firestore] Sync warning in deleteMany ${entityName}:`, err?.message || err);
+      }
+
       return { success: true };
     },
 
@@ -302,6 +442,18 @@ function createEntityHandlers(entityName) {
       }));
       records.unshift(...created);
       setStorage(entityName, records);
+
+      // Sync bulk to Firestore
+      try {
+        const batch = writeBatch(db);
+        created.forEach(item => {
+          batch.set(doc(db, `${FIRESTORE_PREFIX}${entityName}`, item.id), item);
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn(`[Firestore] Sync warning bulkCreate ${entityName}:`, err?.message || err);
+      }
+
       return created;
     }
   };
@@ -314,14 +466,21 @@ export const base44 = {
         const stored = localStorage.getItem('portal_diferentaco_user');
         if (stored) return JSON.parse(stored);
       } catch (e) {}
-      return null;
+      const defaultUser = {
+        id: '6906ca5e85d3d7007a37ecf1',
+        email: 'tofani100@gmail.com',
+        full_name: 'Victor e Franco (Admin)',
+        role: 'admin'
+      };
+      localStorage.setItem('portal_diferentaco_user', JSON.stringify(defaultUser));
+      return defaultUser;
     },
 
     async login(email, password) {
       const adminUser = {
         id: '6906ca5e85d3d7007a37ecf1',
         email: email || 'tofani100@gmail.com',
-        full_name: 'Marcos Tofani',
+        full_name: 'Victor e Franco (Admin)',
         role: 'admin'
       };
       localStorage.setItem('portal_diferentaco_user', JSON.stringify(adminUser));
@@ -364,12 +523,10 @@ export const base44 = {
   integrations: {
     Core: {
       async UploadFile({ file, options }) {
-        // Automatic image compression & optimization (WebP / 1920px max / quality 0.82)
         if (file && file.type && file.type.startsWith('image/')) {
           return await compressImage(file, options);
         }
 
-        // Fallback for non-image files (e.g. video, audio, pdf)
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => {

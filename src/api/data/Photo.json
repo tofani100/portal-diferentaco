@@ -1,5 +1,17 @@
 [
   {
+    "image_url": "/assets/media/diferentaco_sertaozinho_desktop.webp",
+    "album": "press",
+    "caption": "Teste - na imprensa",
+    "visible": true,
+    "id": "photo_press_sertaozinho_promo",
+    "created_date": "2026-10-28T02:10:00.000000",
+    "updated_date": "2026-10-28T02:10:00.000000",
+    "created_by_id": "6906ca5e85d3d7007a37ecf1",
+    "created_by": "tofani100@gmail.com",
+    "is_sample": false
+  },
+  {
     "image_url": "/assets/media/02e2ba597_FOTOSPROMOCIONAISVeF-42.jpg",
     "album": "on_the_road",
     "caption": "",

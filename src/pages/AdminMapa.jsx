@@ -72,7 +72,7 @@ export default function AdminMapa() {
         state: pin.state || "SP",
         venue: pin.venue || "",
         show_date: pin.show_date ? pin.show_date.slice(0, 10) : "",
-        notes: pin.notes || ""
+        notes: pin.notes || pin.message || ""
       });
     } else {
       setEditingPin(null);
@@ -94,10 +94,14 @@ export default function AdminMapa() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const payload = {
+      ...formData,
+      message: formData.notes
+    };
     if (editingPin) {
-      updatePin.mutate({ id: editingPin.id, data: formData });
+      updatePin.mutate({ id: editingPin.id, data: payload });
     } else {
-      createPin.mutate(formData);
+      createPin.mutate(payload);
     }
   };
 

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Calendar } from "lucide-react";
+import { Plus, Pencil, Trash2, Calendar, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import { ptBR } from "date-fns/locale";
 import MediaSpecsBanner from "@/components/admin/MediaSpecsBanner";
 
 export default function AdminEventos() {
+  const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [formData, setFormData] = useState({
@@ -60,10 +62,24 @@ export default function AdminEventos() {
     return [...upcoming, ...past];
   }, [rawEvents]);
 
+  // Support direct action from Agenda (?action=new or ?edit=<id>)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const action = params.get("action");
+    const editId = params.get("edit");
+    if (action === "new") {
+      openDialog();
+    } else if (editId && rawEvents.length > 0) {
+      const target = rawEvents.find(e => e.id === editId);
+      if (target) openDialog(target);
+    }
+  }, [location.search, rawEvents]);
+
   const createEvent = useMutation({
     mutationFn: (data) => base44.entities.Event.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
       closeDialog();
     },
   });
@@ -72,6 +88,7 @@ export default function AdminEventos() {
     mutationFn: ({ id, data }) => base44.entities.Event.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
       closeDialog();
     },
   });
@@ -80,6 +97,7 @@ export default function AdminEventos() {
     mutationFn: (id) => base44.entities.Event.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     },
   });
 
@@ -123,7 +141,7 @@ export default function AdminEventos() {
   };
 
   const handleDelete = (id) => {
-    if (confirm("Tem certeza que deseja excluir este evento?")) {
+    if (confirm("Tem certeza que deseja excluir este show da agenda?")) {
       deleteEvent.mutate(id);
     }
   };
@@ -131,19 +149,19 @@ export default function AdminEventos() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">
-              Gerenciar Eventos
+              Gerenciar Agenda
             </h1>
-            <p className="text-[#D4C5B9]">Adicione e gerencie a agenda de shows</p>
+            <p className="text-[#D4C5B9]">Adicione e gerencie a agenda de shows e links para compra de ingressos</p>
           </div>
           <Button
             onClick={() => openDialog()}
-            className="bg-[#E9A55C] hover:bg-[#d9954c] text-black font-semibold"
+            className="bg-[#E9A55C] hover:bg-[#d9954c] text-black font-semibold shadow-lg"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Novo Evento
+            + Novo Show
           </Button>
         </div>
 
@@ -152,7 +170,7 @@ export default function AdminEventos() {
         {isLoading ? (
           <div className="text-center text-[#D4C5B9] py-12">
             <Calendar className="w-12 h-12 animate-pulse mx-auto mb-4" />
-            Carregando eventos...
+            Carregando agenda...
           </div>
         ) : events.length === 0 ? (
           <Card className="bg-[#1A1A1A] border-[#8B6F47]/30 p-12 text-center">
@@ -186,15 +204,20 @@ export default function AdminEventos() {
                     </div>
                     <h3 className="text-xl font-bold text-white mb-2">{event.venue}</h3>
                     <p className="text-[#D4C5B9]">{event.city}, {event.state}</p>
-                    {event.ticket_link && (
+                    {event.ticket_link ? (
                       <a 
                         href={event.ticket_link} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-[#E9A55C] text-sm hover:underline mt-2 inline-block"
+                        className="text-[#E9A55C] text-sm hover:underline mt-2 inline-flex items-center gap-1 font-semibold"
                       >
-                        Link de ingressos →
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Link de ingressos configurado ({event.ticket_link})
                       </a>
+                    ) : (
+                      <span className="text-gray-500 text-xs mt-2 block">
+                        Sem link de ingressos cadastrado
+                      </span>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -203,6 +226,7 @@ export default function AdminEventos() {
                       size="icon"
                       onClick={() => openDialog(event)}
                       className="text-[#D4C5B9] hover:text-[#E9A55C]"
+                      title="Editar Show e Ingressos"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -211,6 +235,7 @@ export default function AdminEventos() {
                       size="icon"
                       onClick={() => handleDelete(event.id)}
                       className="text-[#D4C5B9] hover:text-red-500"
+                      title="Excluir"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -223,13 +248,13 @@ export default function AdminEventos() {
 
         {/* Event Form Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="bg-[#1A1A1A] border-[#8B6F47]/30">
+          <DialogContent className="bg-[#1A1A1A] border-[#8B6F47]/30 text-white max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-white">
-                {editingEvent ? "Editar Evento" : "Novo Evento"}
+                {editingEvent ? "Editar Show na Agenda" : "Novo Show na Agenda"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
               <div>
                 <Label htmlFor="date" className="text-white">Data e Hora *</Label>
                 <Input
@@ -267,30 +292,36 @@ export default function AdminEventos() {
               </div>
 
               <div>
-                <Label htmlFor="venue" className="text-white">Local *</Label>
+                <Label htmlFor="venue" className="text-white">Local / Evento *</Label>
                 <Input
                   id="venue"
                   value={formData.venue}
                   onChange={(e) => setFormData(prev => ({ ...prev, venue: e.target.value }))}
                   required
+                  placeholder="Ex: Villa's Espaço de Eventos"
                   className="bg-[#0A0A0A] border-[#8B6F47]/30 text-white mt-2"
                 />
               </div>
 
               <div>
-                <Label htmlFor="ticket_link" className="text-white">Link de Ingressos</Label>
+                <Label htmlFor="ticket_link" className="text-white">
+                  Link para Venda de Ingressos (URL)
+                </Label>
                 <Input
                   id="ticket_link"
                   type="url"
                   value={formData.ticket_link}
                   onChange={(e) => setFormData(prev => ({ ...prev, ticket_link: e.target.value }))}
-                  placeholder="https://..."
+                  placeholder="https://byma.com.br/... ou https://..."
                   className="bg-[#0A0A0A] border-[#8B6F47]/30 text-white mt-2"
                 />
+                <span className="text-xs text-[#E9A55C]/80 block mt-1.5">
+                  💡 Quando preenchido, o botão vermelho <strong>'Ingressos'</strong> é exibido automaticamente no card do show na Agenda.
+                </span>
               </div>
 
               <div>
-                <Label htmlFor="status" className="text-white">Status *</Label>
+                <Label htmlFor="status" className="text-white">Status do Show *</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
@@ -298,28 +329,27 @@ export default function AdminEventos() {
                   <SelectTrigger className="bg-[#0A0A0A] border-[#8B6F47]/30 text-white mt-2">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="upcoming">Próximo</SelectItem>
-                    <SelectItem value="past">Realizado</SelectItem>
+                  <SelectContent className="bg-[#1A1A1A] border-[#8B6F47]/30 text-white">
+                    <SelectItem value="upcoming">Próximo Show (Aparece em Próximos Shows)</SelectItem>
+                    <SelectItem value="past">Show Realizado (Histórico)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-[#8B6F47]/20">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={closeDialog}
-                  className="flex-1"
+                  className="text-[#D4C5B9] hover:text-white"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-[#E9A55C] hover:bg-[#d9954c] text-black font-semibold"
-                  disabled={createEvent.isPending || updateEvent.isPending}
+                  className="bg-[#E9A55C] hover:bg-[#d9954c] text-black font-semibold"
                 >
-                  {editingEvent ? "Atualizar" : "Criar"}
+                  {editingEvent ? "Salvar Alterações" : "Adicionar Show"}
                 </Button>
               </div>
             </form>

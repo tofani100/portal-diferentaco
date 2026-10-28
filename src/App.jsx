@@ -67,6 +67,8 @@ export default function App() {
             <Route path="/Newsletter" element={<Newsletter />} />
 
             {/* Admin Routes */}
+            <Route path="/admin/agenda" element={<AdminEventos />} />
+            <Route path="/AdminAgenda" element={<AdminEventos />} />
             <Route path="/admin/eventos" element={<AdminEventos />} />
             <Route path="/AdminEventos" element={<AdminEventos />} />
             <Route path="/admin/fotos" element={<AdminFotos />} />

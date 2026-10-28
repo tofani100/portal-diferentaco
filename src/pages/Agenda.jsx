@@ -1,16 +1,26 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, ExternalLink, Music } from "lucide-react";
+import { Calendar, MapPin, ExternalLink, Music, Pencil, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function Agenda() {
   const [filter, setFilter] = useState("upcoming");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setIsAdmin(u?.role === 'admin'));
+    const handleAuth = (e) => {
+      setIsAdmin(e.detail?.user?.role === 'admin');
+    };
+    window.addEventListener('authChanged', handleAuth);
+    return () => window.removeEventListener('authChanged', handleAuth);
+  }, []);
 
   const { data: allEvents = [], isLoading } = useQuery({
     queryKey: ["events"],
@@ -40,7 +50,7 @@ export default function Agenda() {
     <div className="min-h-screen bg-[#0A0A0A] py-12 px-4">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
             Agenda de Shows
           </h1>
@@ -48,6 +58,24 @@ export default function Agenda() {
             Acompanhe onde estaremos e garanta seu ingresso
           </p>
         </div>
+
+        {/* Admin Quick Actions for Agenda */}
+        {isAdmin && (
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-10 bg-[#1A1A1A]/90 border border-[#8B6F47]/40 p-3 rounded-2xl shadow-xl max-w-lg mx-auto">
+            <Link to="/admin/agenda">
+              <Button className="bg-[#F4231E] hover:bg-[#e41914] text-white font-semibold text-sm flex items-center gap-2 shadow-md">
+                <Calendar className="w-4 h-4" />
+                Gerenciar Agenda
+              </Button>
+            </Link>
+            <Link to="/admin/agenda?action=new">
+              <Button variant="outline" className="border-[#8B6F47] text-[#E9A55C] hover:bg-[#8B6F47]/20 font-semibold text-sm flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                + Novo Show
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {/* Filter Tabs */}
         <div className="flex justify-center mb-12">
@@ -105,7 +133,7 @@ export default function Agenda() {
 
                   {/* Event Details */}
                   <div className="flex-1 p-6 md:p-8">
-                    <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="space-y-3">
                         <h3 className="text-2xl font-bold text-white">
                           {event.venue}
@@ -122,17 +150,31 @@ export default function Agenda() {
                         </div>
                       </div>
 
-                      {event.ticket_link && filter === "upcoming" && (
-                        <div className="flex items-center">
+                      {/* Ticket Button & Admin Quick Edit */}
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        {event.ticket_link && filter === "upcoming" && (
                           <Button
-                            className="bg-[#F4231E] hover:bg-[#e41914] text-white font-semibold"
+                            className="bg-[#F4231E] hover:bg-[#e41914] text-white font-semibold flex items-center justify-center shadow-lg px-6 py-2"
                             onClick={() => window.open(event.ticket_link, "_blank")}
                           >
                             <ExternalLink className="w-4 h-4 mr-2" />
                             Ingressos
                           </Button>
-                        </div>
-                      )}
+                        )}
+
+                        {isAdmin && (
+                          <Link to={`/admin/agenda?edit=${event.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-[#8B6F47]/50 text-[#E9A55C] hover:bg-[#8B6F47]/20 text-xs flex items-center justify-center gap-1.5 font-medium w-full sm:w-auto"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              {event.ticket_link ? "Editar Show / Ingressos" : "Inserir Link Ingressos"}
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

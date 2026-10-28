@@ -71,7 +71,7 @@ export default function Layout({ children }) {
   ];
 
   const adminPages = [
-    { name: "Gerenciar Eventos", href: createPageUrl("AdminEventos") },
+    { name: "Gerenciar Agenda", href: createPageUrl("AdminAgenda") },
     { name: "Gerenciar Vídeos", href: createPageUrl("AdminVideos") },
     { name: "Gerenciar Fotos", href: createPageUrl("AdminFotos") },
     { name: "Gerenciar Fotos de Fãs", href: createPageUrl("AdminFotosFas") },

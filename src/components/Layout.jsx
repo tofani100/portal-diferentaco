@@ -12,9 +12,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
+import EnvironmentBanner from "@/components/EnvironmentBanner";
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const envInfo = base44.env;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
@@ -165,6 +167,7 @@ export default function Layout({ children }) {
 
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-[#8B6F47]/20">
+        <EnvironmentBanner />
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
@@ -269,7 +272,7 @@ export default function Layout({ children }) {
       </header>
 
       {/* Main Content */}
-      <main className="pt-20">
+      <main className={envInfo?.showBadge ? "pt-28" : "pt-20"}>
         {children}
       </main>
 

@@ -32,7 +32,41 @@ const INITIAL_DATA = {
   User: userInitial,
 };
 
-const STORAGE_PREFIX = 'portal_diferentaco_db_';
+const STORAGE_PREFIX = import.meta.env.VITE_STORAGE_PREFIX || 'portal_diferentaco_db_dev_';
+
+export function getEnvironmentInfo() {
+  const env = import.meta.env.VITE_APP_ENV || 'development';
+  return {
+    env,
+    name: import.meta.env.VITE_APP_NAME || 'Portal Diferentaço (DEV)',
+    prefix: STORAGE_PREFIX,
+    isDev: env === 'development',
+    prodUrl: import.meta.env.VITE_PROD_URL || 'https://victorefranco.com.br',
+    showBadge: import.meta.env.VITE_SHOW_ENV_BADGE === 'true' || env === 'development'
+  };
+}
+
+export function resetToProductionSnapshot() {
+  try {
+    Object.keys(INITIAL_DATA).forEach(entity => {
+      localStorage.removeItem(`${STORAGE_PREFIX}${entity}`);
+      localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(INITIAL_DATA[entity]));
+    });
+    window.dispatchEvent(new CustomEvent('databaseReset'));
+    return true;
+  } catch (e) {
+    console.error('Error resetting database:', e);
+    return false;
+  }
+}
+
+export function exportCurrentData() {
+  const data = {};
+  Object.keys(INITIAL_DATA).forEach(entity => {
+    data[entity] = getStorage(entity);
+  });
+  return data;
+}
 
 function getStorage(entity) {
   try {
@@ -234,6 +268,10 @@ export const base44 = {
     PollVote: createEntityHandlers('PollVote'),
     User: createEntityHandlers('User'),
   },
+
+  env: getEnvironmentInfo(),
+  resetToProductionSnapshot,
+  exportCurrentData,
 
   integrations: {
     Core: {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import siteConfigInitial from "@/api/data/SiteConfig.json";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Trash2 } from "lucide-react";
 import {
@@ -106,8 +107,11 @@ export default function HeroSection() {
     }
   };
 
-  const mediaItems = (config?.hero_media_items || []).filter((item) => item.visible !== false);
-  const currentMedia = mediaItems[currentIndex];
+  const rawItems = (config?.hero_media_items && config.hero_media_items.length > 0)
+    ? config.hero_media_items
+    : (siteConfigInitial[0]?.hero_media_items || []);
+  const mediaItems = rawItems.filter((item) => item.visible !== false);
+  const currentMedia = mediaItems[currentIndex] || mediaItems[0];
 
   return (
     <section className="relative h-screen overflow-hidden">
@@ -143,7 +147,7 @@ export default function HeroSection() {
                     alt="Victor e Franco"
                     className="w-full h-full"
                     loading="eager"
-                    fetchpriority="high"
+                    fetchPriority="high"
                     style={{
                       objectFit: "cover",
                       objectPosition: "center",

@@ -16,6 +16,7 @@ import pollVoteInitial from './data/PollVote.json';
 import userInitial from './data/User.json';
 import { idbGet, idbSet, idbRemove } from './indexedDbStorage';
 import { compressImage } from '@/utils/imageOptimizer';
+import { APP_VERSION } from '@/version';
 
 const INITIAL_DATA = {
   Event: eventInitial,
@@ -37,8 +38,33 @@ const INITIAL_DATA = {
 const STORAGE_PREFIX = import.meta.env.VITE_STORAGE_PREFIX || 'portal_diferentaco_db_dev_';
 const MEMORY_CACHE = {};
 
-// Asynchronously hydrate MEMORY_CACHE from IndexedDB (or localStorage fallback)
+// Asynchronously hydrate MEMORY_CACHE from IndexedDB (or localStorage fallback) + Auto-Migrate Stale Cache
 if (typeof window !== 'undefined') {
+  try {
+    const currentVersionKey = `${STORAGE_PREFIX}app_version`;
+    const storedVersion = localStorage.getItem(currentVersionKey);
+
+    // If SiteConfig in localStorage still has the old deleted photo "porteamar.jpg" or lacks mobile_url, refresh it!
+    const rawSiteConfig = localStorage.getItem(`${STORAGE_PREFIX}SiteConfig`);
+    if (rawSiteConfig) {
+      const parsedConfig = JSON.parse(rawSiteConfig);
+      const configStr = JSON.stringify(parsedConfig);
+      if (configStr.includes('porteamar.jpg') || !parsedConfig[0]?.hero_media_items?.[0]?.mobile_url) {
+        console.log('[Base44] Stale SiteConfig detected with old deleted photo. Upgrading to official Sertãozinho banners...');
+        const freshConfig = JSON.parse(JSON.stringify(siteConfigInitial));
+        MEMORY_CACHE['SiteConfig'] = freshConfig;
+        localStorage.setItem(`${STORAGE_PREFIX}SiteConfig`, JSON.stringify(freshConfig));
+        idbSet(`${STORAGE_PREFIX}SiteConfig`, freshConfig);
+      }
+    }
+
+    if (storedVersion !== APP_VERSION) {
+      localStorage.setItem(currentVersionKey, APP_VERSION);
+    }
+  } catch (e) {
+    console.warn('[Base44] Migration warning:', e);
+  }
+
   Object.keys(INITIAL_DATA).forEach((entity) => {
     // 1. Try fast synchronous localStorage first
     try {
@@ -51,6 +77,12 @@ if (typeof window !== 'undefined') {
     // 2. Hydrate from IndexedDB (can store much larger datasets without 5MB quota)
     idbGet(`${STORAGE_PREFIX}${entity}`).then((idbData) => {
       if (idbData && Array.isArray(idbData) && idbData.length > 0) {
+        // Prevent resurrecting the old deleted photo if IndexedDB had it cached previously
+        if (entity === 'SiteConfig' && JSON.stringify(idbData).includes('porteamar.jpg')) {
+          idbSet(`${STORAGE_PREFIX}SiteConfig`, siteConfigInitial);
+          MEMORY_CACHE['SiteConfig'] = siteConfigInitial;
+          return;
+        }
         MEMORY_CACHE[entity] = idbData;
         window.dispatchEvent(new CustomEvent('databaseHydrated', { detail: { entity } }));
       }

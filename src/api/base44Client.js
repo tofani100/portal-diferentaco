@@ -464,16 +464,13 @@ export const base44 = {
     async me() {
       try {
         const stored = localStorage.getItem('portal_diferentaco_user');
-        if (stored) return JSON.parse(stored);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.email) return parsed;
+        }
       } catch (e) {}
-      const defaultUser = {
-        id: '6906ca5e85d3d7007a37ecf1',
-        email: 'tofani100@gmail.com',
-        full_name: 'Victor e Franco (Admin)',
-        role: 'admin'
-      };
-      localStorage.setItem('portal_diferentaco_user', JSON.stringify(defaultUser));
-      return defaultUser;
+      // Visitantes comuns iniciam deslogados por padrão (sem privilégios administrativos)
+      return null;
     },
 
     async login(email, password) {

@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
-import EnvironmentBanner from "@/components/EnvironmentBanner";
+import { APP_VERSION } from "@/version";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -167,17 +167,28 @@ export default function Layout({ children }) {
 
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-[#8B6F47]/20">
-        <EnvironmentBanner />
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <Link to={createPageUrl("Home")} className="flex items-center gap-3">
-              <img 
-                src="/assets/media/4e533a150_logo_Victor_e_Franco-removebg-preview.png"
-                alt="Victor & Franco"
-                className="h-12 md:h-14 w-auto"
-              />
-            </Link>
+            {/* Logo + Dev Indicator */}
+            <div className="flex items-center gap-3">
+              {envInfo?.showBadge && (
+                <div
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-2.5 py-1 rounded-md text-[11px] font-black tracking-wider uppercase shadow-md border border-amber-600 select-none cursor-default"
+                  title={`Ambiente de Desenvolvimento - Versão ${APP_VERSION}`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-black animate-pulse inline-block"></span>
+                  <span>MODO DEV {APP_VERSION}</span>
+                </div>
+              )}
+
+              <Link to={createPageUrl("Home")} className="flex items-center gap-3">
+                <img 
+                  src="/assets/media/4e533a150_logo_Victor_e_Franco-removebg-preview.png"
+                  alt="Victor & Franco"
+                  className="h-12 md:h-14 w-auto"
+                />
+              </Link>
+            </div>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
@@ -272,7 +283,7 @@ export default function Layout({ children }) {
       </header>
 
       {/* Main Content */}
-      <main className={envInfo?.showBadge ? "pt-28" : "pt-20"}>
+      <main className="pt-20">
         {children}
       </main>
 

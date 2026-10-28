@@ -171,6 +171,12 @@ function matchesQuery(record, query) {
   if (!query) return true;
   for (const [key, val] of Object.entries(query)) {
     if (val === undefined) continue;
+    // Support boolean query matching for flags like approved, visible, etc.
+    if (typeof val === 'boolean') {
+      const recVal = Boolean(record[key]);
+      if (recVal !== val) return false;
+      continue;
+    }
     if (record[key] !== val) return false;
   }
   return true;
@@ -202,8 +208,14 @@ function createEntityHandlers(entityName) {
 
     async create(data) {
       const records = getStorage(entityName);
-      const newRecord = {
+      const defaults = {
         visible: true,
+      };
+      if (entityName === 'FanPhoto') {
+        defaults.approved = false;
+      }
+      const newRecord = {
+        ...defaults,
         ...data,
         id: data.id || generateId(),
         created_date: new Date().toISOString(),

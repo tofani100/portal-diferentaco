@@ -12,14 +12,22 @@ export default function AdminFotosFas() {
   const [filterPending, setFilterPending] = React.useState("all");
   const [filterApproved, setFilterApproved] = React.useState("all");
 
+  React.useEffect(() => {
+    const handleHydration = () => {
+      queryClient.invalidateQueries({ queryKey: ["fanPhotos"] });
+    };
+    window.addEventListener("databaseHydrated", handleHydration);
+    return () => window.removeEventListener("databaseHydrated", handleHydration);
+  }, [queryClient]);
+
   const { data: pendingPhotos = [], isLoading: loadingPending } = useQuery({
     queryKey: ["fanPhotos", "pending"],
-    queryFn: () => base44.entities.FanPhoto.filter({ approved: false }),
+    queryFn: () => base44.entities.FanPhoto.filter({ approved: false }, "-created_date"),
   });
 
   const { data: approvedPhotos = [], isLoading: loadingApproved } = useQuery({
     queryKey: ["fanPhotos", "approved"],
-    queryFn: () => base44.entities.FanPhoto.filter({ approved: true }),
+    queryFn: () => base44.entities.FanPhoto.filter({ approved: true }, "-created_date"),
   });
 
   const updatePhoto = useMutation({
@@ -37,7 +45,7 @@ export default function AdminFotosFas() {
   });
 
   const handleApprove = (id) => {
-    updatePhoto.mutate({ id, data: { approved: true } });
+    updatePhoto.mutate({ id, data: { approved: true, visible: true } });
   };
 
   const handleReject = (id) => {

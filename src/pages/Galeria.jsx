@@ -42,18 +42,31 @@ export default function Galeria() {
   });
 
   const submitFanPhoto = useMutation({
-    mutationFn: (data) => base44.entities.FanPhoto.create(data),
+    mutationFn: (data) => base44.entities.FanPhoto.create({
+      ...data,
+      approved: false,
+      visible: true
+    }),
     onSuccess: () => {
       setFanFormOpen(false);
       setFanData({ fan_name: "", fan_city: "", photo_url: "" });
       alert("Foto enviada com sucesso! Aguarde a aprovação.");
-      queryClient.invalidateQueries(["fanPhotos"]); // Invalidate cache to refetch fan photos
+      queryClient.invalidateQueries({ queryKey: ["fanPhotos"] });
     },
     onError: (error) => {
       console.error("Error submitting fan photo:", error);
       alert("Erro ao enviar foto. Tente novamente.");
     }
   });
+
+  React.useEffect(() => {
+    const handleHydration = () => {
+      queryClient.invalidateQueries({ queryKey: ["fanPhotos"] });
+      queryClient.invalidateQueries({ queryKey: ["photos"] });
+    };
+    window.addEventListener("databaseHydrated", handleHydration);
+    return () => window.removeEventListener("databaseHydrated", handleHydration);
+  }, [queryClient]);
 
   const handleFileUpload = async (file) => {
     setUploading(true);

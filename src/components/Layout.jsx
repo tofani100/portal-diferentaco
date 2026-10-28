@@ -72,10 +72,14 @@ export default function Layout({ children }) {
 
   const adminPages = [
     { name: "Gerenciar Agenda", href: createPageUrl("AdminAgenda") },
+    { name: "Gerenciar Músicas", href: createPageUrl("AdminMusica") },
     { name: "Gerenciar Vídeos", href: createPageUrl("AdminVideos") },
     { name: "Gerenciar Fotos", href: createPageUrl("AdminFotos") },
     { name: "Gerenciar Fotos de Fãs", href: createPageUrl("AdminFotosFas") },
+    { name: "Gerenciar Por Onde Passamos", href: createPageUrl("AdminMapa") },
     { name: "Gerenciar Depoimentos", href: createPageUrl("AdminDepoimentos") },
+    { name: "Gerenciar Parceiros", href: createPageUrl("AdminParceiros") },
+    { name: "Gerenciar Contatos", href: createPageUrl("AdminContatos") },
     { name: "Gerenciar Enquetes", href: createPageUrl("AdminEnquetes") },
     { name: "Ver Inscritos Newsletter", href: createPageUrl("AdminNewsletter") },
   ];

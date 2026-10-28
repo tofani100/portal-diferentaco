@@ -74,7 +74,7 @@ export default function Contato() {
                     <Phone className="w-6 h-6 text-[#F4231E]" />
                   </div>
                   <div>
-                    <p className="text-[#D4C5B9] text-sm mb-1">Telefone</p>
+                    <p className="text-[#D4C5B9] text-sm mb-1">Contratações</p>
                     <a
                       href="tel:+5516981294040"
                       className="text-white font-semibold hover:text-[#F4231E] transition-colors"

@@ -253,11 +253,21 @@ export default function Parceiros() {
               Junte-se a nós e faça parte da história de Victor & Franco. 
               Entre em contato para conhecer as oportunidades de parceria.
             </p>
+            <div className="mb-6">
+              <p className="text-white/80 text-xs uppercase tracking-wider font-semibold mb-1">Contratações e Parcerias</p>
+              <a
+                href="tel:+5516981294040"
+                className="text-2xl md:text-3xl font-extrabold text-white hover:underline block"
+              >
+                +55 16 98129-4040
+              </a>
+              <p className="text-white/80 text-xs mt-1">(falar com Luis Sicchieri)</p>
+            </div>
             <a
-              href="tel:+5511981960396"
-              className="inline-block bg-white hover:bg-white/90 text-[#F4231E] font-semibold px-8 py-3 rounded-full transition-all"
+              href="tel:+5516981294040"
+              className="inline-block bg-white hover:bg-white/90 text-[#F4231E] font-semibold px-8 py-3 rounded-full transition-all shadow-lg"
             >
-              Fale Conosco
+              Ligue para Contratações
             </a>
           </Card>
         </div>

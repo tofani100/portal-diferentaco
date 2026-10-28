@@ -18,10 +18,14 @@ import Newsletter from "./pages/Newsletter";
 
 // Admin pages
 import AdminEventos from "./pages/AdminEventos";
+import AdminMusica from "./pages/AdminMusica";
+import AdminVideos from "./pages/AdminVideos";
 import AdminFotos from "./pages/AdminFotos";
 import AdminFotosFas from "./pages/AdminFotosFas";
-import AdminVideos from "./pages/AdminVideos";
+import AdminMapa from "./pages/AdminMapa";
 import AdminDepoimentos from "./pages/AdminDepoimentos";
+import AdminParceiros from "./pages/AdminParceiros";
+import AdminContatos from "./pages/AdminContatos";
 import AdminEnquetes from "./pages/AdminEnquetes";
 import AdminNewsletter from "./pages/AdminNewsletter";
 
@@ -91,16 +95,35 @@ export default function App() {
             <Route path="/AdminAgenda" element={<AdminGuard><AdminEventos /></AdminGuard>} />
             <Route path="/admin/eventos" element={<AdminGuard><AdminEventos /></AdminGuard>} />
             <Route path="/AdminEventos" element={<AdminGuard><AdminEventos /></AdminGuard>} />
+
+            <Route path="/admin/musicas" element={<AdminGuard><AdminMusica /></AdminGuard>} />
+            <Route path="/admin/musica" element={<AdminGuard><AdminMusica /></AdminGuard>} />
+            <Route path="/AdminMusica" element={<AdminGuard><AdminMusica /></AdminGuard>} />
+
+            <Route path="/admin/videos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
+            <Route path="/AdminVideos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
+
             <Route path="/admin/fotos" element={<AdminGuard><AdminFotos /></AdminGuard>} />
             <Route path="/AdminFotos" element={<AdminGuard><AdminFotos /></AdminGuard>} />
             <Route path="/admin/fotos-fas" element={<AdminGuard><AdminFotosFas /></AdminGuard>} />
             <Route path="/AdminFotosFas" element={<AdminGuard><AdminFotosFas /></AdminGuard>} />
-            <Route path="/admin/videos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
-            <Route path="/AdminVideos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
+
+            <Route path="/admin/por-onde-passamos" element={<AdminGuard><AdminMapa /></AdminGuard>} />
+            <Route path="/admin/mapa" element={<AdminGuard><AdminMapa /></AdminGuard>} />
+            <Route path="/AdminMapa" element={<AdminGuard><AdminMapa /></AdminGuard>} />
+
             <Route path="/admin/depoimentos" element={<AdminGuard><AdminDepoimentos /></AdminGuard>} />
             <Route path="/AdminDepoimentos" element={<AdminGuard><AdminDepoimentos /></AdminGuard>} />
+
+            <Route path="/admin/parceiros" element={<AdminGuard><AdminParceiros /></AdminGuard>} />
+            <Route path="/AdminParceiros" element={<AdminGuard><AdminParceiros /></AdminGuard>} />
+
+            <Route path="/admin/contatos" element={<AdminGuard><AdminContatos /></AdminGuard>} />
+            <Route path="/AdminContatos" element={<AdminGuard><AdminContatos /></AdminGuard>} />
+
             <Route path="/admin/enquetes" element={<AdminGuard><AdminEnquetes /></AdminGuard>} />
             <Route path="/AdminEnquetes" element={<AdminGuard><AdminEnquetes /></AdminGuard>} />
+
             <Route path="/admin/newsletter" element={<AdminGuard><AdminNewsletter /></AdminGuard>} />
             <Route path="/AdminNewsletter" element={<AdminGuard><AdminNewsletter /></AdminGuard>} />
 

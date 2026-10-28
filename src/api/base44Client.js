@@ -107,6 +107,17 @@ function initFirestoreSync(entity) {
 
 // Asynchronously hydrate MEMORY_CACHE from IndexedDB (or localStorage fallback) + Auto-Migrate Stale Cache
 if (typeof window !== 'undefined') {
+  // Mobile safety: ensure mobile devices are 100% free of legacy admin tokens
+  const isMobileCheck =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    window.innerWidth <= 768;
+
+  if (isMobileCheck) {
+    try {
+      localStorage.removeItem('portal_diferentaco_user');
+      sessionStorage.removeItem('portal_diferentaco_user');
+    } catch (e) {}
+  }
   try {
     const currentVersionKey = `${STORAGE_PREFIX}app_version`;
     const storedVersion = localStorage.getItem(currentVersionKey);
@@ -462,6 +473,19 @@ function createEntityHandlers(entityName) {
 export const base44 = {
   auth: {
     async me() {
+      // Celulares e tablets são estritamente para o público (administração restrita ao Desktop)
+      if (typeof window !== 'undefined') {
+        const isMobile =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+          window.innerWidth <= 768;
+        if (isMobile) {
+          try {
+            localStorage.removeItem('portal_diferentaco_user');
+          } catch (e) {}
+          return null;
+        }
+      }
+
       try {
         const stored = localStorage.getItem('portal_diferentaco_user');
         if (stored) {
@@ -469,7 +493,6 @@ export const base44 = {
           if (parsed && parsed.email) return parsed;
         }
       } catch (e) {}
-      // Visitantes comuns iniciam deslogados por padrão (sem privilégios administrativos)
       return null;
     },
 

@@ -61,7 +61,7 @@ export default function Agenda() {
 
         {/* Admin Quick Actions for Agenda */}
         {isAdmin && (
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-10 bg-[#1A1A1A]/90 border border-[#8B6F47]/40 p-3 rounded-2xl shadow-xl max-w-lg mx-auto">
+          <div className="hidden md:flex flex-wrap items-center justify-center gap-3 mb-10 bg-[#1A1A1A]/90 border border-[#8B6F47]/40 p-3 rounded-2xl shadow-xl max-w-lg mx-auto">
             <Link to="/admin/agenda">
               <Button className="bg-[#F4231E] hover:bg-[#e41914] text-white font-semibold text-sm flex items-center gap-2 shadow-md">
                 <Calendar className="w-4 h-4" />
@@ -163,7 +163,7 @@ export default function Agenda() {
                         )}
 
                         {isAdmin && (
-                          <Link to={`/admin/agenda?edit=${event.id}`}>
+                          <Link to={`/admin/agenda?edit=${event.id}`} className="hidden md:inline-block">
                             <Button
                               variant="outline"
                               size="sm"

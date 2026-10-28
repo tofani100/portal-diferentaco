@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Layout from "./components/Layout";
@@ -40,6 +40,25 @@ if (typeof window !== "undefined") {
 }
 
 export default function App() {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        window.innerWidth <= 768;
+
+      if (isMobile && window.location.pathname !== "/" && window.location.pathname !== "") {
+        const navEntries = window.performance?.getEntriesByType?.("navigation");
+        const isReload =
+          (navEntries && navEntries[0] && navEntries[0].type === "reload") ||
+          window.performance?.navigation?.type === 1;
+
+        if (isReload) {
+          window.location.replace("/");
+        }
+      }
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

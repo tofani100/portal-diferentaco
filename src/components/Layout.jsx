@@ -129,16 +129,24 @@ export default function Layout({ children }) {
           color: var(--text);
         }
 
-        .mobile-menu-btn {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-around;
-          width: 28px;
-          height: 28px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
+        @media (max-width: 1023px) {
+          .mobile-menu-btn {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .mobile-menu-btn {
+            display: none !important;
+          }
         }
 
         .mobile-menu-btn span {
@@ -230,7 +238,7 @@ export default function Layout({ children }) {
 
             {/* Mobile Menu Button */}
             <button
-              className={`lg:hidden mobile-menu-btn ${mobileMenuOpen ? 'open' : ''}`}
+              className={`hidden max-lg:flex mobile-menu-btn ${mobileMenuOpen ? 'open' : ''}`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Menu"
             >

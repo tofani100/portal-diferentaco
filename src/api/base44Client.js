@@ -1,5 +1,5 @@
 // Standalone Base44-compatible client
-// 100% independent from base44.com - fully persistent in localStorage with fallback to initial data
+// 100% independent from base44.com - fully persistent in IndexedDB + localStorage with fallback to initial data
 import eventInitial from './data/Event.json';
 import photoInitial from './data/Photo.json';
 import fanPhotoInitial from './data/FanPhoto.json';
@@ -14,6 +14,8 @@ import testimonialInitial from './data/Testimonial.json';
 import pollInitial from './data/Poll.json';
 import pollVoteInitial from './data/PollVote.json';
 import userInitial from './data/User.json';
+import { idbGet, idbSet, idbRemove } from './indexedDbStorage';
+import { compressImage } from '@/utils/imageOptimizer';
 
 const INITIAL_DATA = {
   Event: eventInitial,
@@ -33,6 +35,28 @@ const INITIAL_DATA = {
 };
 
 const STORAGE_PREFIX = import.meta.env.VITE_STORAGE_PREFIX || 'portal_diferentaco_db_dev_';
+const MEMORY_CACHE = {};
+
+// Asynchronously hydrate MEMORY_CACHE from IndexedDB (or localStorage fallback)
+if (typeof window !== 'undefined') {
+  Object.keys(INITIAL_DATA).forEach((entity) => {
+    // 1. Try fast synchronous localStorage first
+    try {
+      const raw = localStorage.getItem(`${STORAGE_PREFIX}${entity}`);
+      if (raw) {
+        MEMORY_CACHE[entity] = JSON.parse(raw);
+      }
+    } catch (e) {}
+
+    // 2. Hydrate from IndexedDB (can store much larger datasets without 5MB quota)
+    idbGet(`${STORAGE_PREFIX}${entity}`).then((idbData) => {
+      if (idbData && Array.isArray(idbData) && idbData.length > 0) {
+        MEMORY_CACHE[entity] = idbData;
+        window.dispatchEvent(new CustomEvent('databaseHydrated', { detail: { entity } }));
+      }
+    }).catch(() => {});
+  });
+}
 
 export function getEnvironmentInfo() {
   const env = import.meta.env.VITE_APP_ENV || 'development';
@@ -46,12 +70,16 @@ export function getEnvironmentInfo() {
   };
 }
 
-export function resetToProductionSnapshot() {
+export async function resetToProductionSnapshot() {
   try {
-    Object.keys(INITIAL_DATA).forEach(entity => {
-      localStorage.removeItem(`${STORAGE_PREFIX}${entity}`);
-      localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(INITIAL_DATA[entity]));
-    });
+    for (const entity of Object.keys(INITIAL_DATA)) {
+      const clone = JSON.parse(JSON.stringify(INITIAL_DATA[entity]));
+      MEMORY_CACHE[entity] = clone;
+      await idbSet(`${STORAGE_PREFIX}${entity}`, clone);
+      try {
+        localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(clone));
+      } catch (e) {}
+    }
     window.dispatchEvent(new CustomEvent('databaseReset'));
     return true;
   } catch (e) {
@@ -69,24 +97,42 @@ export function exportCurrentData() {
 }
 
 function getStorage(entity) {
+  if (MEMORY_CACHE[entity]) {
+    return MEMORY_CACHE[entity];
+  }
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}${entity}`);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      MEMORY_CACHE[entity] = parsed;
+      return parsed;
+    }
   } catch (e) {
     console.error(`Error reading ${entity} from localStorage:`, e);
   }
   const initial = INITIAL_DATA[entity] || [];
+  const cloned = JSON.parse(JSON.stringify(initial));
+  MEMORY_CACHE[entity] = cloned;
   try {
-    localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(initial));
+    localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(cloned));
   } catch (e) {}
-  return JSON.parse(JSON.stringify(initial));
+  return cloned;
 }
 
 function setStorage(entity, data) {
+  // 1. Immediately update synchronous in-memory cache
+  MEMORY_CACHE[entity] = data;
+
+  // 2. Persist to IndexedDB (asynchronous, practically unlimited quota)
+  idbSet(`${STORAGE_PREFIX}${entity}`, data).catch(err => {
+    console.error(`[IndexedDB] Error persisting ${entity}:`, err);
+  });
+
+  // 3. Persist to localStorage (as backup)
   try {
     localStorage.setItem(`${STORAGE_PREFIX}${entity}`, JSON.stringify(data));
   } catch (e) {
-    console.error(`Error saving ${entity} to localStorage:`, e);
+    console.warn(`[LocalStorage] Quota reached for ${entity}; safely saved in IndexedDB.`);
   }
 }
 
@@ -111,7 +157,6 @@ function sortRecords(records, sortBy) {
     if (valA === undefined || valA === null) return 1;
     if (valB === undefined || valB === null) return -1;
 
-    // Check date or string or number
     if (typeof valA === 'number' && typeof valB === 'number') {
       return isDesc ? valB - valA : valA - valB;
     }
@@ -158,6 +203,7 @@ function createEntityHandlers(entityName) {
     async create(data) {
       const records = getStorage(entityName);
       const newRecord = {
+        visible: true,
         ...data,
         id: data.id || generateId(),
         created_date: new Date().toISOString(),
@@ -174,7 +220,6 @@ function createEntityHandlers(entityName) {
       const records = getStorage(entityName);
       const idx = records.findIndex(r => r.id === id);
       if (idx === -1) {
-        // If updating an unexisting singleton (e.g. SiteConfig)
         return this.create({ ...data, id });
       }
       const updated = {
@@ -205,6 +250,7 @@ function createEntityHandlers(entityName) {
     async bulkCreate(items) {
       const records = getStorage(entityName);
       const created = items.map(item => ({
+        visible: true,
         ...item,
         id: item.id || generateId(),
         created_date: new Date().toISOString(),
@@ -224,12 +270,10 @@ export const base44 = {
         const stored = localStorage.getItem('portal_diferentaco_user');
         if (stored) return JSON.parse(stored);
       } catch (e) {}
-      // Default to admin user for seamless management if logged in, or null
       return null;
     },
 
     async login(email, password) {
-      // Allow admin login
       const adminUser = {
         id: '6906ca5e85d3d7007a37ecf1',
         email: email || 'tofani100@gmail.com',
@@ -275,11 +319,22 @@ export const base44 = {
 
   integrations: {
     Core: {
-      async UploadFile({ file }) {
+      async UploadFile({ file, options }) {
+        // Automatic image compression & optimization (WebP / 1920px max / quality 0.82)
+        if (file && file.type && file.type.startsWith('image/')) {
+          return await compressImage(file, options);
+        }
+
+        // Fallback for non-image files (e.g. video, audio, pdf)
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => {
-            resolve({ file_url: reader.result });
+            resolve({
+              file_url: reader.result,
+              originalSize: file.size,
+              optimizedSize: file.size,
+              savedPercent: 0
+            });
           };
           reader.onerror = reject;
           reader.readAsDataURL(file);

@@ -23,6 +23,7 @@ console.log('🚀 VERSÃO NOVA CARREGADA:', BUILD_TIMESTAMP);
 export default function AdminFotos() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStats, setUploadStats] = useState(null);
   const [uploadMethod, setUploadMethod] = useState("file"); // "file" or "url"
   const [filterPress, setFilterPress] = useState("all"); // "all", "visible", "hidden"
   const [filterRoad, setFilterRoad] = useState("all");
@@ -30,10 +31,20 @@ export default function AdminFotos() {
   const [formData, setFormData] = useState({
     image_url: "",
     album: "press",
-    caption: ""
+    caption: "",
+    visible: true
   });
 
   const queryClient = useQueryClient();
+
+  React.useEffect(() => {
+    const handleHydration = () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-photos"] });
+      queryClient.invalidateQueries({ queryKey: ["siteConfig", "hero_media"] });
+    };
+    window.addEventListener("databaseHydrated", handleHydration);
+    return () => window.removeEventListener("databaseHydrated", handleHydration);
+  }, [queryClient]);
 
   const { data: pressPhotos = [] } = useQuery({
     queryKey: ["admin-photos", "press"],
@@ -72,12 +83,16 @@ export default function AdminFotos() {
   });
 
   const createPhoto = useMutation({
-    mutationFn: (data) => base44.entities.Photo.create(data),
+    mutationFn: (data) => base44.entities.Photo.create({ ...data, visible: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-photos"] });
       queryClient.invalidateQueries({ queryKey: ["photos"] });
       closeDialog();
     },
+    onError: (err) => {
+      console.error("Erro ao salvar foto:", err);
+      alert("Erro ao salvar foto: " + (err?.message || err));
+    }
   });
 
   const deletePhoto = useMutation({
@@ -99,10 +114,11 @@ export default function AdminFotos() {
   const handleFileUpload = async (file) => {
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData(prev => ({ ...prev, image_url: file_url }));
+      const result = await base44.integrations.Core.UploadFile({ file });
+      setFormData(prev => ({ ...prev, image_url: result.file_url, visible: true }));
+      setUploadStats(result);
     } catch (error) {
-      alert("Erro ao fazer upload da foto");
+      alert("Erro ao processar e otimizar foto: " + (error?.message || error));
     }
     setUploading(false);
   };
@@ -138,7 +154,8 @@ export default function AdminFotos() {
 
   const closeDialog = () => {
     setDialogOpen(false);
-    setFormData({ image_url: "", album: "press", caption: "" });
+    setFormData({ image_url: "", album: "press", caption: "", visible: true });
+    setUploadStats(null);
     setUploadMethod("file");
   };
 
@@ -727,6 +744,17 @@ export default function AdminFotos() {
                             alt="Preview"
                             className="w-full h-48 object-cover rounded-lg"
                           />
+                          {uploadStats && uploadStats.savedPercent > 0 && (
+                            <div className="mt-2 bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 p-2.5 rounded-lg text-xs flex items-center justify-between">
+                              <span className="font-medium flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Otimizada para Web (WebP {uploadStats.width}x{uploadStats.height})
+                              </span>
+                              <span className="font-bold bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-700/50">
+                                {(uploadStats.originalSize / 1024).toFixed(0)} KB ➔ {(uploadStats.optimizedSize / 1024).toFixed(0)} KB (-{uploadStats.savedPercent}%)
+                              </span>
+                            </div>
+                          )}
                           <Button
                             type="button"
                             variant="ghost"

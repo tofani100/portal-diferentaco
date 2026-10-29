@@ -22,8 +22,14 @@ export default function Layout({ children }) {
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("tofani100@gmail.com");
+  const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
 
   const loadUser = async () => {
     try {
@@ -42,6 +48,10 @@ export default function Layout({ children }) {
     };
 
     const handleOpenLogin = () => {
+      setLoginError("");
+      setForgotMode(false);
+      setResetSent(false);
+      setResetError("");
       setLoginDialogOpen(true);
     };
 
@@ -82,6 +92,7 @@ export default function Layout({ children }) {
     { name: "Gerenciar Contatos", href: createPageUrl("AdminContatos") },
     { name: "Gerenciar Enquetes", href: createPageUrl("AdminEnquetes") },
     { name: "Ver Inscritos Newsletter", href: createPageUrl("AdminNewsletter") },
+    { name: "Gerenciar Administradores", href: createPageUrl("AdminUsuarios") },
   ];
 
   const isActive = (href) => location.pathname === href;
@@ -108,8 +119,31 @@ export default function Layout({ children }) {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    await base44.auth.login(loginEmail, loginPassword);
-    setLoginDialogOpen(false);
+    setLoginError("");
+    setLoginLoading(true);
+    try {
+      await base44.auth.login(loginEmail, loginPassword);
+      setLoginDialogOpen(false);
+      setLoginPassword("");
+    } catch (err) {
+      setLoginError(err?.message || "Erro ao realizar login. Verifique suas credenciais.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setResetError("");
+    setResetLoading(true);
+    try {
+      await base44.auth.resetPassword(loginEmail);
+      setResetSent(true);
+    } catch (err) {
+      setResetError(err?.message || "Erro ao enviar e-mail de recuperação.");
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (

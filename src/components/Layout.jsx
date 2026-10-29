@@ -425,12 +425,17 @@ export default function Layout({ children }) {
 
             <div>
               <h4 className="font-semibold text-white mb-4">Contato</h4>
-              <p className="text-[#D4C5B9] text-sm mb-4">
+              <p className="text-[#D4C5B9] text-sm mb-2">
                 Contratações:<br />
                 <a href="tel:+5516981294040" className="text-[#F4231E] hover:underline">
                   +55 16 98129-4040
                 </a><br />
                 <span className="text-xs">(falar com Luis Sicchieri)</span>
+              </p>
+              <p className="text-xs mb-4">
+                <a href="mailto:comercial@victorefranco.com.br" className="text-[#E9A55C] hover:underline">
+                  comercial@victorefranco.com.br
+                </a>
               </p>
               <div className="flex gap-4">
                 <a

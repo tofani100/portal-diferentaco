@@ -93,9 +93,12 @@ export default function Contato() {
                   </div>
                   <div>
                     <p className="text-[#D4C5B9] text-sm mb-1">E-mail</p>
-                    <p className="text-white font-semibold">
-                      contato@victorfranco.com.br
-                    </p>
+                    <a
+                      href="mailto:comercial@victorefranco.com.br"
+                      className="text-white font-semibold hover:text-[#F4231E] transition-colors"
+                    >
+                      comercial@victorefranco.com.br
+                    </a>
                   </div>
                 </div>
 

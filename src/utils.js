@@ -28,6 +28,7 @@ const PAGE_ROUTE_MAP = {
   AdminContatos: "/admin/contatos",
   AdminEnquetes: "/admin/enquetes",
   AdminNewsletter: "/admin/newsletter",
+  AdminUsuarios: "/admin/usuarios",
 };
 
 export function createPageUrl(pageName) {

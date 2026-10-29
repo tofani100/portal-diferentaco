@@ -16,7 +16,12 @@ import userInitial from './data/User.json';
 import { idbGet, idbSet } from './indexedDbStorage';
 import { compressImage } from '@/utils/imageOptimizer';
 import { APP_VERSION } from '@/version';
-import { db } from './firebaseClient';
+import { db, auth } from './firebaseClient';
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail
+} from 'firebase/auth';
 import {
   collection,
   doc,
@@ -472,6 +477,32 @@ function createEntityHandlers(entityName) {
 
 export const base44 = {
   auth: {
+    async isEmailAuthorized(email) {
+      const cleanEmail = (email || '').trim().toLowerCase();
+      if (!cleanEmail) return false;
+
+      const defaultAdmins = [
+        'tofani100@gmail.com',
+        'tofani2002@gmail.com',
+        'wtofani@hotmail.com'
+      ];
+      if (defaultAdmins.includes(cleanEmail)) return true;
+
+      try {
+        const users = await base44.entities.User.list();
+        const found = (users || []).find(
+          u => (u.email || '').trim().toLowerCase() === cleanEmail
+        );
+        if (found && (found.role === 'admin' || found._app_role === 'admin') && !found.disabled) {
+          return true;
+        }
+      } catch (err) {
+        console.warn('[Auth] Checking authorized users error:', err);
+      }
+
+      return false;
+    },
+
     async me() {
       // Celulares e tablets são estritamente para o público (administração restrita ao Desktop)
       if (typeof window !== 'undefined') {
@@ -490,22 +521,83 @@ export const base44 = {
         const stored = localStorage.getItem('portal_diferentaco_user');
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed && parsed.email) return parsed;
+          if (parsed && parsed.email && parsed.role === 'admin') {
+            return parsed;
+          }
         }
       } catch (e) {}
       return null;
     },
 
     async login(email, password) {
-      const adminUser = {
-        id: '6906ca5e85d3d7007a37ecf1',
-        email: email || 'tofani100@gmail.com',
-        full_name: 'Victor e Franco (Admin)',
-        role: 'admin'
-      };
-      localStorage.setItem('portal_diferentaco_user', JSON.stringify(adminUser));
-      window.dispatchEvent(new CustomEvent('authChanged', { detail: { user: adminUser } }));
-      return adminUser;
+      const cleanEmail = (email || '').trim().toLowerCase();
+      if (!cleanEmail || !password) {
+        throw new Error('Por favor, informe seu e-mail e sua senha.');
+      }
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        const fbUser = userCredential.user;
+
+        const isAuthorized = await this.isEmailAuthorized(cleanEmail);
+        if (!isAuthorized) {
+          await signOut(auth);
+          throw new Error('Acesso negado: Este e-mail não possui autorização de administrador.');
+        }
+
+        const adminUser = {
+          id: fbUser.uid,
+          email: fbUser.email,
+          full_name: fbUser.displayName || fbUser.email.split('@')[0],
+          role: 'admin'
+        };
+
+        localStorage.setItem('portal_diferentaco_user', JSON.stringify(adminUser));
+        window.dispatchEvent(new CustomEvent('authChanged', { detail: { user: adminUser } }));
+        return adminUser;
+      } catch (error) {
+        console.error('[Auth] Login error:', error);
+        let msg = 'Erro ao realizar login. Verifique suas credenciais.';
+        if (
+          error.code === 'auth/invalid-credential' ||
+          error.code === 'auth/wrong-password' ||
+          error.code === 'auth/user-not-found'
+        ) {
+          msg = 'E-mail ou senha incorretos.';
+        } else if (error.code === 'auth/invalid-email') {
+          msg = 'Formato de e-mail inválido.';
+        } else if (error.code === 'auth/too-many-requests') {
+          msg = 'Muitas tentativas com falha. Aguarde alguns minutos antes de tentar novamente.';
+        } else if (error.message) {
+          msg = error.message;
+        }
+        throw new Error(msg);
+      }
+    },
+
+    async resetPassword(email) {
+      const cleanEmail = (email || '').trim().toLowerCase();
+      if (!cleanEmail) {
+        throw new Error('Informe o e-mail cadastrado para recuperar a senha.');
+      }
+
+      try {
+        await sendPasswordResetEmail(auth, cleanEmail);
+        return { success: true };
+      } catch (error) {
+        console.error('[Auth] Reset password error:', error);
+        let msg = 'Erro ao enviar e-mail de recuperação.';
+        if (error.code === 'auth/user-not-found') {
+          msg = 'Nenhuma conta encontrada com este e-mail.';
+        } else if (error.code === 'auth/invalid-email') {
+          msg = 'Formato de e-mail inválido.';
+        } else if (error.code === 'auth/too-many-requests') {
+          msg = 'Muitos pedidos enviados recentemente. Aguarde alguns minutos.';
+        } else if (error.message) {
+          msg = error.message;
+        }
+        throw new Error(msg);
+      }
     },
 
     redirectToLogin(redirectUrl) {
@@ -513,6 +605,9 @@ export const base44 = {
     },
 
     async logout() {
+      try {
+        await signOut(auth);
+      } catch (e) {}
       localStorage.removeItem('portal_diferentaco_user');
       window.dispatchEvent(new CustomEvent('authChanged', { detail: { user: null } }));
       window.location.reload();

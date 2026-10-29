@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Instagram, Youtube, Lock, Unlock, LogIn, X } from "lucide-react";
+import { Instagram, Youtube, Lock, Unlock, LogIn, X, AlertCircle, CheckCircle, KeyRound, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -483,51 +483,188 @@ export default function Layout({ children }) {
       </footer>
 
       {/* Admin Login Dialog */}
-      <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
+      <Dialog open={loginDialogOpen} onOpenChange={(open) => {
+        setLoginDialogOpen(open);
+        if (!open) {
+          setLoginError("");
+          setResetError("");
+          setForgotMode(false);
+          setResetSent(false);
+        }
+      }}>
         <DialogContent className="bg-[#1A1A1A] border-[#8B6F47]/30 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-white">Login do Administrador</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleLoginSubmit} className="space-y-4 pt-4">
-            <div>
-              <Label htmlFor="admin-email">E-mail</Label>
-              <Input
-                id="admin-email"
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                required
-                className="mt-2 bg-[#0A0A0A] border-[#8B6F47]/30 text-white"
-              />
-            </div>
-            <div>
-              <Label htmlFor="admin-password">Senha</Label>
-              <Input
-                id="admin-password"
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="Qualquer senha para ambiente local"
-                className="mt-2 bg-[#0A0A0A] border-[#8B6F47]/30 text-white"
-              />
-            </div>
-            <div className="flex gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setLoginDialogOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1 bg-[#F4231E] hover:bg-[#e41914] text-white font-semibold"
-              >
-                Entrar
-              </Button>
-            </div>
-          </form>
+          {!forgotMode ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Lock className="w-6 h-6 text-[#F4231E]" />
+                  Login do Administrador
+                </DialogTitle>
+                <p className="text-xs text-[#D4C5B9] mt-1">
+                  Acesso exclusivo para administradores autorizados.
+                </p>
+              </DialogHeader>
+
+              {loginError && (
+                <div className="bg-[#F4231E]/15 border border-[#F4231E]/40 text-[#ff8b88] text-sm p-3 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleLoginSubmit} className="space-y-4 pt-2">
+                <div>
+                  <Label htmlFor="admin-email">E-mail</Label>
+                  <Input
+                    id="admin-email"
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="seu.email@exemplo.com"
+                    required
+                    disabled={loginLoading}
+                    className="mt-2 bg-[#0A0A0A] border-[#8B6F47]/30 text-white"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="admin-password">Senha</Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotMode(true);
+                        setLoginError("");
+                        setResetError("");
+                        setResetSent(false);
+                      }}
+                      className="text-xs text-[#E9A55C] hover:text-[#f0b876] transition-colors"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  </div>
+                  <Input
+                    id="admin-password"
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Digite sua senha"
+                    required
+                    disabled={loginLoading}
+                    className="mt-2 bg-[#0A0A0A] border-[#8B6F47]/30 text-white"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 border-[#8B6F47]/40 text-[#D4C5B9] hover:bg-[#2A2A2A] hover:text-white"
+                    onClick={() => setLoginDialogOpen(false)}
+                    disabled={loginLoading}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-[#F4231E] hover:bg-[#e41914] text-white font-semibold flex items-center justify-center gap-2"
+                    disabled={loginLoading}
+                  >
+                    {loginLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Entrando...
+                      </>
+                    ) : (
+                      "Entrar"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
+                  <KeyRound className="w-6 h-6 text-[#E9A55C]" />
+                  Recuperar Senha
+                </DialogTitle>
+                <p className="text-xs text-[#D4C5B9] mt-1">
+                  Digite seu e-mail cadastrado. O Google enviará um link direto para você definir sua nova senha.
+                </p>
+              </DialogHeader>
+
+              {resetError && (
+                <div className="bg-[#F4231E]/15 border border-[#F4231E]/40 text-[#ff8b88] text-sm p-3 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <span>{resetError}</span>
+                </div>
+              )}
+
+              {resetSent ? (
+                <div className="space-y-4 pt-2">
+                  <div className="bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-sm p-4 rounded-lg flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-semibold text-emerald-200">E-mail de recuperação enviado!</p>
+                      <p className="text-xs leading-relaxed text-emerald-300/90">
+                        Enviamos o link de redefinição para <strong>{loginEmail}</strong>. Verifique sua caixa de entrada e a pasta de spam.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setForgotMode(false);
+                      setResetSent(false);
+                    }}
+                    className="w-full bg-[#E9A55C] hover:bg-[#d8954d] text-black font-semibold"
+                  >
+                    Voltar para o Login
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleResetSubmit} className="space-y-4 pt-2">
+                  <div>
+                    <Label htmlFor="reset-email">E-mail cadastrado</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="seu.email@exemplo.com"
+                      required
+                      disabled={resetLoading}
+                      className="mt-2 bg-[#0A0A0A] border-[#8B6F47]/30 text-white"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 border-[#8B6F47]/40 text-[#D4C5B9] hover:bg-[#2A2A2A] hover:text-white"
+                      onClick={() => setForgotMode(false)}
+                      disabled={resetLoading}
+                    >
+                      Voltar
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-[#E9A55C] hover:bg-[#d8954d] text-black font-semibold flex items-center justify-center gap-2"
+                      disabled={resetLoading}
+                    >
+                      {resetLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        "Enviar Link"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

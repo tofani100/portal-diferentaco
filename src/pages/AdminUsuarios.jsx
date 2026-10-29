@@ -20,6 +20,7 @@ import {
 
 const DEFAULT_SUPERADMINS = [
   "tofani100@gmail.com",
+  "tofani10@hotmail.com",
   "tofani2002@gmail.com",
   "wtofani@hotmail.com"
 ];
@@ -80,6 +81,9 @@ export default function AdminUsuarios() {
         is_verified: true,
         disabled: false
       });
+
+      // Auto provision in Firebase Auth so password recovery works immediately
+      await base44.auth.createAdminAccount(cleanEmail);
 
       setUsers([created, ...users]);
       setNewEmail("");

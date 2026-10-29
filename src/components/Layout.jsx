@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Instagram, Youtube, Lock, Unlock, LogIn, X, AlertCircle, CheckCircle, KeyRound, Loader2, Users } from "lucide-react";
+import { Instagram, Youtube, Lock, Unlock, LogIn, X, AlertCircle, CheckCircle, KeyRound, Loader2, Users, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ export default function Layout({ children }) {
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [forgotMode, setForgotMode] = useState(false);
@@ -52,6 +53,7 @@ export default function Layout({ children }) {
       setForgotMode(false);
       setResetSent(false);
       setResetError("");
+      setShowPassword(false);
       setLoginDialogOpen(true);
     };
 
@@ -576,16 +578,31 @@ export default function Layout({ children }) {
                       Esqueceu a senha?
                     </button>
                   </div>
-                  <Input
-                    id="admin-password"
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="Digite sua senha"
-                    required
-                    disabled={loginLoading}
-                    className="mt-2 bg-[#0A0A0A] border-[#8B6F47]/30 text-white"
-                  />
+                  <div className="relative mt-2">
+                    <Input
+                      id="admin-password"
+                      type={showPassword ? "text" : "password"}
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Digite sua senha"
+                      required
+                      disabled={loginLoading}
+                      className="bg-[#0A0A0A] border-[#8B6F47]/30 text-white pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#D4C5B9] hover:text-[#E9A55C] transition-colors focus:outline-none p-1"
+                      tabIndex={-1}
+                      title={showPassword ? "Ocultar senha" : "Ver senha digitada"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button
@@ -637,11 +654,22 @@ export default function Layout({ children }) {
                 <div className="space-y-4 pt-2">
                   <div className="bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-sm p-4 rounded-lg flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="font-semibold text-emerald-200">E-mail de recuperação enviado!</p>
+                    <div className="space-y-2">
+                      <p className="font-semibold text-emerald-200">E-mail de recuperação enviado com sucesso!</p>
                       <p className="text-xs leading-relaxed text-emerald-300/90">
-                        Enviamos o link de redefinição para <strong>{loginEmail}</strong>. Verifique sua caixa de entrada e a pasta de spam.
+                        O Google enviou as instruções de redefinição para <strong>{loginEmail}</strong>.
                       </p>
+                      <div className="p-2.5 bg-black/50 rounded-lg border border-emerald-500/20 text-xs text-[#D4C5B9] space-y-1">
+                        <p className="font-semibold text-amber-300 flex items-center gap-1">
+                          ⚠️ Atenção importante (Hotmail, Outlook e Gmail):
+                        </p>
+                        <p className="leading-relaxed">
+                          • Em contas <strong>Hotmail / Outlook</strong>, verifique <strong>obrigatoriamente</strong> a pasta de <strong>Lixo Eletrônico</strong> ou a aba <strong>Outros</strong>.
+                        </p>
+                        <p className="leading-relaxed">
+                          • O remetente oficial é <code>noreply@playcomunique-site.firebaseapp.com</code>.
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <Button

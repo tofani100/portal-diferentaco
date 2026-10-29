@@ -483,6 +483,7 @@ export const base44 = {
 
       const defaultAdmins = [
         'tofani100@gmail.com',
+        'tofani10@hotmail.com',
         'tofani2002@gmail.com',
         'wtofani@hotmail.com'
       ];
@@ -575,10 +576,40 @@ export const base44 = {
       }
     },
 
+    async createAdminAccount(email, tempPassword = 'VictoreFranco@10') {
+      const cleanEmail = (email || '').trim().toLowerCase();
+      if (!cleanEmail) return;
+
+      try {
+        const apiKey = auth.config?.apiKey || auth.app?.options?.apiKey;
+        const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: cleanEmail,
+            password: tempPassword,
+            returnSecureToken: false
+          })
+        });
+        const data = await res.json();
+        if (data.error && data.error.message !== 'EMAIL_EXISTS') {
+          console.warn('[Auth] Note on creating user in Identity Toolkit:', data.error);
+        }
+        return data;
+      } catch (e) {
+        console.warn('[Auth] createAdminAccount warning:', e);
+      }
+    },
+
     async resetPassword(email) {
       const cleanEmail = (email || '').trim().toLowerCase();
       if (!cleanEmail) {
         throw new Error('Informe o e-mail cadastrado para recuperar a senha.');
+      }
+
+      const isAuthorized = await this.isEmailAuthorized(cleanEmail);
+      if (!isAuthorized) {
+        throw new Error('Este e-mail não consta na lista de administradores autorizados.');
       }
 
       try {
@@ -588,7 +619,7 @@ export const base44 = {
         console.error('[Auth] Reset password error:', error);
         let msg = 'Erro ao enviar e-mail de recuperação.';
         if (error.code === 'auth/user-not-found') {
-          msg = 'Nenhuma conta encontrada com este e-mail.';
+          msg = 'Nenhuma conta encontrada com este e-mail no Firebase Auth.';
         } else if (error.code === 'auth/invalid-email') {
           msg = 'Formato de e-mail inválido.';
         } else if (error.code === 'auth/too-many-requests') {

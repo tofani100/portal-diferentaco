@@ -256,18 +256,23 @@ export default function Parceiros() {
             <div className="mb-6">
               <p className="text-white/80 text-xs uppercase tracking-wider font-semibold mb-1">Contratações e Parcerias</p>
               <a
-                href="tel:+5516981294040"
-                className="text-2xl md:text-3xl font-extrabold text-white hover:underline block"
+                href="https://wa.me/5516981294040?text=Ol%C3%A1%2C%20gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20contrata%C3%A7%C3%A3o%20e%20parcerias%20com%20Victor%20%26%20Franco."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl md:text-3xl font-extrabold text-white hover:underline hover:text-[#25D366] transition-colors block"
+                title="Chamar no WhatsApp"
               >
                 +55 16 98129-4040
               </a>
               <p className="text-white/80 text-xs mt-1">(falar com Luis Sicchieri)</p>
             </div>
             <a
-              href="tel:+5516981294040"
-              className="inline-block bg-white hover:bg-white/90 text-[#F4231E] font-semibold px-8 py-3 rounded-full transition-all shadow-lg"
+              href="https://wa.me/5516981294040?text=Ol%C3%A1%2C%20gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20contrata%C3%A7%C3%A3o%20e%20parcerias%20com%20Victor%20%26%20Franco."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold px-8 py-3 rounded-full transition-all shadow-lg"
             >
-              Ligue para Contratações
+              Conversar no WhatsApp
             </a>
           </Card>
         </div>

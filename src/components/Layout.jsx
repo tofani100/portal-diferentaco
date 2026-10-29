@@ -427,7 +427,13 @@ export default function Layout({ children }) {
               <h4 className="font-semibold text-white mb-4">Contato</h4>
               <p className="text-[#D4C5B9] text-sm mb-2">
                 Contratações:<br />
-                <a href="tel:+5516981294040" className="text-[#F4231E] hover:underline">
+                <a
+                  href="https://wa.me/5516981294040?text=Ol%C3%A1%2C%20gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20contrata%C3%A7%C3%A3o%20do%20show%20de%20Victor%20%26%20Franco."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#F4231E] hover:underline hover:text-[#25D366] transition-colors"
+                  title="Chamar no WhatsApp"
+                >
                   +55 16 98129-4040
                 </a><br />
                 <span className="text-xs">(falar com Luis Sicchieri)</span>

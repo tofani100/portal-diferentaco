@@ -76,8 +76,11 @@ export default function Contato() {
                   <div>
                     <p className="text-[#D4C5B9] text-sm mb-1">Contratações</p>
                     <a
-                      href="tel:+5516981294040"
-                      className="text-white font-semibold hover:text-[#F4231E] transition-colors"
+                      href="https://wa.me/5516981294040?text=Ol%C3%A1%2C%20gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20contrata%C3%A7%C3%A3o%20do%20show%20de%20Victor%20%26%20Franco."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white font-semibold hover:text-[#25D366] transition-colors"
+                      title="Chamar no WhatsApp"
                     >
                       +55 16 98129-4040
                     </a>

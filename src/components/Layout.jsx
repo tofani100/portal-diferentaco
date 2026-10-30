@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Instagram, Youtube, Lock, Unlock, LogIn, X, AlertCircle, CheckCircle, KeyRound, Loader2, Users, Eye, EyeOff } from "lucide-react";
+import { Instagram, Youtube, Lock, Unlock, LogIn, X, AlertCircle, CheckCircle, KeyRound, Loader2, Users, Eye, EyeOff, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -355,11 +355,10 @@ export default function Layout({ children }) {
               <div className="mt-6 hidden md:block">
                 <button
                   onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                  className="text-[#8B6F47]/70 hover:text-[#E9A55C] transition-colors text-xs flex items-center gap-1.5 py-1 px-2.5 rounded border border-[#8B6F47]/20 hover:border-[#8B6F47]/50 hover:bg-[#8B6F47]/10 cursor-pointer"
-                  title="Área Administrativa (Desktop)"
+                  className="text-zinc-600 hover:text-zinc-400 p-1.5 rounded transition-colors cursor-pointer opacity-40 hover:opacity-100 flex items-center justify-center w-8 h-8 hover:bg-white/5"
+                  aria-label="Menu"
                 >
-                  <Lock className="w-3.5 h-3.5 text-[#E9A55C]" />
-                  <span>Área Administrativa</span>
+                  <Menu className="w-4 h-4" />
                 </button>
                 
                 {adminMenuOpen && (

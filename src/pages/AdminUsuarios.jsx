@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
@@ -133,25 +134,7 @@ export default function AdminUsuarios() {
   const isSuper = base44.auth.isSuperAdmin(currentUser);
 
   if (!loading && !isSuper) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
-        <Card className="bg-[#1A1A1A] border-[#8B6F47]/40 p-8 max-w-md w-full text-center shadow-2xl">
-          <div className="w-16 h-16 bg-[#F4231E]/10 border border-[#F4231E]/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8 text-[#F4231E]" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Acesso Exclusivo Super Admin</h2>
-          <p className="text-[#D4C5B9] text-sm mb-6 leading-relaxed">
-            A criação, edição e exclusão de usuários é de responsabilidade exclusiva dos administradores principais (<strong>Marcos Tofani</strong> e <strong>Walter Tofani</strong>).
-          </p>
-          <Button
-            onClick={() => window.location.href = '/'}
-            className="bg-[#E9A55C] hover:bg-[#d8954d] text-black font-semibold w-full"
-          >
-            Voltar ao Início
-          </Button>
-        </Card>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   return (

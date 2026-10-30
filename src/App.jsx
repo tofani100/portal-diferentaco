@@ -29,6 +29,7 @@ import AdminContatos from "./pages/AdminContatos";
 import AdminEnquetes from "./pages/AdminEnquetes";
 import AdminNewsletter from "./pages/AdminNewsletter";
 import AdminUsuarios from "./pages/AdminUsuarios";
+import AdminAuditoria from "./pages/AdminAuditoria";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +131,9 @@ export default function App() {
 
             <Route path="/admin/usuarios" element={<AdminGuard><AdminUsuarios /></AdminGuard>} />
             <Route path="/AdminUsuarios" element={<AdminGuard><AdminUsuarios /></AdminGuard>} />
+
+            <Route path="/admin/auditoria" element={<AdminGuard><AdminAuditoria /></AdminGuard>} />
+            <Route path="/AdminAuditoria" element={<AdminGuard><AdminAuditoria /></AdminGuard>} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -46,6 +46,7 @@ const INITIAL_DATA = {
   Poll: pollInitial,
   PollVote: pollVoteInitial,
   User: userInitial,
+  AuditLog: [],
 };
 
 const isProd = import.meta.env.VITE_APP_ENV === 'production';
@@ -326,6 +327,203 @@ function matchesQuery(record, query) {
   return true;
 }
 
+export const SUPER_ADMIN_EMAILS = [
+  'tofani100@gmail.com',
+  'wtofani@hotmail.com'
+];
+
+let cachedClientContext = null;
+async function getClientContext() {
+  if (cachedClientContext && cachedClientContext.city && cachedClientContext.city !== 'Detectando...') {
+    return cachedClientContext;
+  }
+
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+
+  let os = 'Desconhecido';
+  if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Macintosh|Mac OS/i.test(ua)) os = 'macOS';
+  else if (/iPhone|iPad/i.test(ua)) os = 'iOS';
+  else if (/Android/i.test(ua)) os = 'Android';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+
+  let browser = 'Navegador Web';
+  if (/Edg\//i.test(ua)) browser = 'Microsoft Edge';
+  else if (/Chrome\//i.test(ua)) browser = 'Google Chrome';
+  else if (/Safari\//i.test(ua)) browser = 'Apple Safari';
+  else if (/Firefox\//i.test(ua)) browser = 'Mozilla Firefox';
+  else if (/Opera|OPR\//i.test(ua)) browser = 'Opera';
+
+  const screenRes = typeof window !== 'undefined' && window.screen ? `${window.screen.width}x${window.screen.height}` : '';
+
+  cachedClientContext = {
+    userAgent: ua,
+    os,
+    browser,
+    device: `${browser} (${os})`,
+    screen: screenRes,
+    city: 'Detectando...',
+    region: '',
+    country: 'Brasil',
+    ip: '...'
+  };
+
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = sessionStorage.getItem('portal_geo_cache');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        cachedClientContext = { ...cachedClientContext, ...parsed };
+        return cachedClientContext;
+      }
+    } catch (e) {}
+
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(geo => {
+        if (geo && geo.ip) {
+          const geoData = {
+            city: geo.city || 'Desconhecida',
+            region: geo.region_code || geo.region || '',
+            country: geo.country_name || 'Brasil',
+            ip: geo.ip || 'Oculto',
+            org: geo.org || ''
+          };
+          cachedClientContext = { ...cachedClientContext, ...geoData };
+          try {
+            sessionStorage.setItem('portal_geo_cache', JSON.stringify(geoData));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  }
+
+  return cachedClientContext;
+}
+
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    getClientContext();
+  }, 1000);
+}
+
+const ENTITY_FRIENDLY_NAMES = {
+  Event: 'Agenda / Show',
+  Photo: 'Galeria de Fotos',
+  FanPhoto: 'Foto de Fã',
+  Partner: 'Parceiro / Patrocinador',
+  MapPin: 'Por Onde Passamos (Mapa)',
+  Video: 'Vídeo Oficial',
+  ContactRequest: 'Mensagem de Contato / Orçamento',
+  SiteConfig: 'Configuração do Site',
+  FeaturedTrack: 'Música / Faixa',
+  NewsletterSubscriber: 'Inscrito na Newsletter',
+  Testimonial: 'Depoimento',
+  Poll: 'Enquete',
+  PollVote: 'Voto de Enquete',
+  User: 'Administrador / Usuário',
+  AuditLog: 'Auditoria'
+};
+
+function getEntitySummary(entityName, record) {
+  if (!record) return '';
+  switch (entityName) {
+    case 'Photo':
+      return record.caption || record.title || (record.is_cover ? 'Foto de Capa' : 'Foto da Galeria');
+    case 'Event':
+      return `${record.title || 'Show'} em ${record.city || ''} (${record.event_date || ''})`.trim();
+    case 'FeaturedTrack':
+      return record.title ? `"${record.title}"` : 'Música';
+    case 'Video':
+      return record.title ? `"${record.title}"` : 'Vídeo';
+    case 'MapPin':
+      return `${record.city || ''} - ${record.state || ''}${record.local ? ' (' + record.local + ')' : ''}`;
+    case 'User':
+      return record.email || record.full_name || 'Usuário';
+    case 'Partner':
+      return record.name || 'Parceiro';
+    case 'Testimonial':
+      return `Depoimento de ${record.author_name || record.name || 'Fã'}`;
+    case 'ContactRequest':
+      return `Contato de ${record.name || record.contractor_name || record.email || ''}`;
+    case 'SiteConfig':
+      return record.key || record.name || 'Configuração';
+    default:
+      return record.title || record.name || record.email || record.id || '';
+  }
+}
+
+async function logAuditEvent({ action, entityName, id, record, previousRecord }) {
+  if (entityName === 'AuditLog' || entityName === 'PollVote') return;
+
+  try {
+    let user = null;
+    try {
+      const stored = localStorage.getItem('portal_diferentaco_user');
+      if (stored) user = JSON.parse(stored);
+    } catch (e) {}
+
+    const userEmail = user?.email || 'Sistema / Não identificado';
+    const userName = user?.full_name || user?.displayName || userEmail.split('@')[0];
+
+    const clientCtx = await getClientContext();
+    const summary = getEntitySummary(entityName, record || previousRecord);
+    const friendlyEntity = ENTITY_FRIENDLY_NAMES[entityName] || entityName;
+
+    let actionLabel = 'Ação';
+    let actionText = '';
+    if (action === 'CREATE') {
+      actionLabel = 'Criação';
+      actionText = `Cadastrou ${friendlyEntity}${summary ? `: "${summary}"` : ''}`;
+    } else if (action === 'UPDATE') {
+      actionLabel = 'Edição';
+      actionText = `Alterou ${friendlyEntity}${summary ? `: "${summary}"` : ''}`;
+    } else if (action === 'DELETE') {
+      actionLabel = 'Exclusão';
+      actionText = `Excluiu ${friendlyEntity}${summary ? `: "${summary}"` : ''}`;
+    }
+
+    const logEntry = {
+      id: generateId(),
+      action,
+      action_label: actionLabel,
+      action_text: actionText,
+      entity_name: entityName,
+      entity_friendly: friendlyEntity,
+      entity_id: id || record?.id || previousRecord?.id || '',
+      entity_summary: summary,
+      user_email: userEmail,
+      user_name: userName,
+      user_role: user?.role || 'admin',
+      timestamp: new Date().toISOString(),
+      formatted_date: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      device: clientCtx.device || 'Navegador Web',
+      os: clientCtx.os || '',
+      browser: clientCtx.browser || '',
+      screen: clientCtx.screen || '',
+      ip: clientCtx.ip && clientCtx.ip !== '...' ? clientCtx.ip : 'Registrado',
+      location: clientCtx.city && clientCtx.city !== 'Detectando...'
+        ? `${clientCtx.city}${clientCtx.region ? ' - ' + clientCtx.region : ''}, ${clientCtx.country}`
+        : 'Brasil',
+      city: clientCtx.city || '',
+      region: clientCtx.region || '',
+      country: clientCtx.country || 'Brasil',
+      previous_snapshot: previousRecord ? JSON.stringify(previousRecord) : null,
+      new_snapshot: record ? JSON.stringify(record) : null
+    };
+
+    const logs = getStorage('AuditLog');
+    logs.unshift(logEntry);
+    if (logs.length > 500) logs.length = 500;
+    setStorage('AuditLog', logs);
+
+    const docRef = doc(db, `${FIRESTORE_PREFIX}AuditLog`, logEntry.id);
+    setDoc(docRef, logEntry).catch(() => {});
+  } catch (err) {
+    console.warn('[AuditLog] Logging warning:', err);
+  }
+}
+
 function createEntityHandlers(entityName) {
   return {
     async list(sortBy, limit) {
@@ -358,14 +556,20 @@ function createEntityHandlers(entityName) {
       if (entityName === 'FanPhoto') {
         defaults.approved = false;
       }
+      let currentLoggedUser = null;
+      try {
+        const stored = localStorage.getItem('portal_diferentaco_user');
+        if (stored) currentLoggedUser = JSON.parse(stored);
+      } catch (e) {}
+
       const newRecord = {
         ...defaults,
         ...data,
         id: data.id || generateId(),
         created_date: new Date().toISOString(),
         updated_date: new Date().toISOString(),
-        created_by_id: '6906ca5e85d3d7007a37ecf1',
-        created_by: 'tofani100@gmail.com'
+        created_by_id: currentLoggedUser?.id || '6906ca5e85d3d7007a37ecf1',
+        created_by: currentLoggedUser?.email || 'tofani100@gmail.com'
       };
 
       // 1. Immediately update local storage and memory
@@ -379,6 +583,9 @@ function createEntityHandlers(entityName) {
       } catch (err) {
         console.warn(`[Firestore] Sync warning creating ${entityName}:`, err?.message || err);
       }
+
+      // 3. Audit log
+      logAuditEvent({ action: 'CREATE', entityName, id: newRecord.id, record: newRecord });
 
       return newRecord;
     },
@@ -396,6 +603,8 @@ function createEntityHandlers(entityName) {
         updated_date: new Date().toISOString()
       };
 
+      const previousRecord = { ...records[idx] };
+
       // 1. Update local storage and memory
       records[idx] = updated;
       setStorage(entityName, records);
@@ -408,11 +617,15 @@ function createEntityHandlers(entityName) {
         console.warn(`[Firestore] Sync warning updating ${entityName}:`, err?.message || err);
       }
 
+      // 3. Audit log
+      logAuditEvent({ action: 'UPDATE', entityName, id, record: updated, previousRecord });
+
       return updated;
     },
 
     async delete(id) {
       let records = getStorage(entityName);
+      const previousRecord = records.find(r => r.id === id);
       records = records.filter(r => r.id !== id);
       setStorage(entityName, records);
 
@@ -423,6 +636,9 @@ function createEntityHandlers(entityName) {
       } catch (err) {
         console.warn(`[Firestore] Sync warning deleting ${entityName}:`, err?.message || err);
       }
+
+      // Audit log
+      logAuditEvent({ action: 'DELETE', entityName, id, previousRecord });
 
       return { success: true, id };
     },
@@ -438,6 +654,7 @@ function createEntityHandlers(entityName) {
         const batch = writeBatch(db);
         toDelete.forEach(item => {
           batch.delete(doc(db, `${FIRESTORE_PREFIX}${entityName}`, item.id));
+          logAuditEvent({ action: 'DELETE', entityName, id: item.id, previousRecord: item });
         });
         await batch.commit();
       } catch (err) {
@@ -464,6 +681,7 @@ function createEntityHandlers(entityName) {
         const batch = writeBatch(db);
         created.forEach(item => {
           batch.set(doc(db, `${FIRESTORE_PREFIX}${entityName}`, item.id), item);
+          logAuditEvent({ action: 'CREATE', entityName, id: item.id, record: item });
         });
         await batch.commit();
       } catch (err) {
@@ -502,6 +720,11 @@ export const base44 = {
       }
 
       return false;
+    },
+
+    isSuperAdmin(userOrEmail) {
+      const email = (typeof userOrEmail === 'string' ? userOrEmail : userOrEmail?.email || '').trim().toLowerCase();
+      return email === 'tofani100@gmail.com' || email === 'wtofani@hotmail.com';
     },
 
     async me() {
@@ -660,6 +883,7 @@ export const base44 = {
     Poll: createEntityHandlers('Poll'),
     PollVote: createEntityHandlers('PollVote'),
     User: createEntityHandlers('User'),
+    AuditLog: createEntityHandlers('AuditLog'),
   },
 
   env: getEnvironmentInfo(),

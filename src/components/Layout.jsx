@@ -82,6 +82,9 @@ export default function Layout({ children }) {
     { name: "Contato", href: createPageUrl("Contato") },
   ];
 
+  const isSuper = base44.auth.isSuperAdmin(user);
+  const isAdmin = user?.role === 'admin';
+
   const adminPages = [
     { name: "Gerenciar Agenda", href: createPageUrl("AdminAgenda") },
     { name: "Gerenciar Músicas", href: createPageUrl("AdminMusica") },
@@ -94,11 +97,13 @@ export default function Layout({ children }) {
     { name: "Gerenciar Contatos", href: createPageUrl("AdminContatos") },
     { name: "Gerenciar Enquetes", href: createPageUrl("AdminEnquetes") },
     { name: "Ver Inscritos Newsletter", href: createPageUrl("AdminNewsletter") },
-    { name: "Gerenciar Administradores", href: createPageUrl("AdminUsuarios") },
+    ...(isSuper ? [
+      { name: "Gerenciar Administradores", href: createPageUrl("AdminUsuarios") },
+      { name: "Gestão de Auditoria", href: createPageUrl("AdminAuditoria") }
+    ] : [])
   ];
 
   const isActive = (href) => location.pathname === href;
-  const isAdmin = user?.role === 'admin';
 
   const toggleEditMode = () => {
     if (!isAdmin) {
@@ -380,7 +385,7 @@ export default function Layout({ children }) {
                       </div>
                     ) : (
                       <div className="mb-3 p-2 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-400">
-                        ✓ Logado como {user.email}
+                        ✓ Logado como {user.email} {isSuper ? '(Super Admin)' : '(Administrador)'}
                       </div>
                     )}
                     
